@@ -1,0 +1,35 @@
+name: Trigger Python Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set input values
+        id: set-inputs
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "::set-output name=pypi-repository::pypi"
+            echo "::set-output name=pypi-username::${{ secrets.PYPI_USERNAME }}"
+            echo "::set-output name=pypi-password::${{ secrets.PYPI_PASSWORD }}"
+          else
+            echo "::set-output name=pypi-repository::testpypi"
+            echo "::set-output name=pypi-username::${{ secrets.PYPI_TEST_USERNAME }}"
+            echo "::set-output name=pypi-password::${{ secrets.PYPI_TEST_PASSWORD }}"
+          fi
+
+      - name: Trigger Python Build and Publish
+        uses: NIVEL-GITHUB/jeap-github-actions/.github/workflows/python-package-build-and-publish.yml@feature/JEAP-5201
+        with:
+          python-version: 3.10
+          test-folder: tests
+          pypi-repository: ${{ steps.set-inputs.outputs.pypi-repository }}
+        secrets:
+          PYPI_USERNAME: ${{ steps.set-inputs.outputs.pypi-username }}
+          PYPI_PASSWORD: ${{ steps.set-inputs.outputs.pypi-password }}
