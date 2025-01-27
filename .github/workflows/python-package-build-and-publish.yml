@@ -24,7 +24,7 @@ jobs:
         run: |
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "pypi-repository=pypi" >> $GITHUB_OUTPUT
-            echo "pypi-api-token =${{ secrets.PYPI_API_TOKEN }}" >> $GITHUB_OUTPUT
+            echo "pypi-api-token=${{ secrets.PYPI_API_TOKEN }}" >> $GITHUB_OUTPUT
           else
             echo "pypi-repository=testpypi" >> $GITHUB_OUTPUT
             echo "pypi-api-token=${{ secrets.PYPI_TEST_API_TOKEN }}" >> $GITHUB_OUTPUT
