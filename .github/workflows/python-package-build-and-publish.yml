@@ -1,0 +1,66 @@
+name: Python package build and publish
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Set values
+        id: set-values
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "pypi-repository=pypi" >> $GITHUB_OUTPUT
+            echo "pypi-api-token =${{ secrets.PYPI_API_TOKEN }}" >> $GITHUB_OUTPUT
+          else
+            echo "pypi-repository=testpypi" >> $GITHUB_OUTPUT
+            echo "pypi-api-token=${{ secrets.PYPI_TEST_API_TOKEN }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set version
+        id: set-version
+        run: |
+          VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f2)
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          VERSION=$VERSION
+          else
+          VERSION=${VERSION}.dev$(date +%s)
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.set-version.outputs.version }}\"/" pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python3 -m build
+
+      - name: Run tests
+        run: |
+          pip install -r requirements.txt
+          python3 -m unittest discover tests
+
+      - name: Publish package
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ steps.set-values.outputs.pypi-api-token }}
+        run: |
+          python3 -m twine upload --verbose --repository ${{ steps.set-values.outputs.pypi-repository }} dist/*
