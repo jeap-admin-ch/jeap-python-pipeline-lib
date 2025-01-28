@@ -22,9 +22,9 @@ A collection of Python modules and libraries for CI/CD pipelines with jEAP conte
     pip install -r requirements.txt
     ```
 
-4. Or install tools for development:
+4. Or to install just the tools use:
     ```bash
-    pip install build twine pip-licenses
+    pip install build twine pip-licenses pytest
     ```
 
 ### Development basics
@@ -62,6 +62,13 @@ To create the package run this command from the same directory where pyproject.t
 python -m build
 ```
 This command should generate two files in the dist directory. The tar.gz file is a source distribution whereas the .whl file is a built distribution.
+
+### Test
+
+To run the tests, use the following command:
+```bash
+python3 -m pytest
+```
 
 ### Upload
 

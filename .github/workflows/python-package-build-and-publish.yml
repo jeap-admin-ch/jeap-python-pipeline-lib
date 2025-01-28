@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install build twine pip-licenses
+          pip install build twine pip-licenses pytest
 
       - name: Run license check script
         run: |
@@ -57,10 +57,13 @@ jobs:
       - name: Build package
         run: python3 -m build
 
-      - name: Run tests
+      - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          python3 -m unittest discover tests
+
+      - name: Run tests
+        run: |
+          python3 -m pytest
 
       - name: Publish package
         env:

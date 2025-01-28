@@ -1,5 +1,5 @@
 import unittest
-from jeap_pipeline import hello_jeap
+from src.jeap_pipeline import hello_jeap
 
 
 class TestHelloWorld(unittest.TestCase):
