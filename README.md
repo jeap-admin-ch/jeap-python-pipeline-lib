@@ -43,6 +43,11 @@ A collection of Python modules and libraries for CI/CD pipelines with jEAP conte
     - Update the version number in the `pyproject.toml` file.
     - Ensure the version number complies with semantic versioning and the PEP 440 standard.
 
+* **Add new dependencies**:
+    - Add the dependency to the `requirements.txt` file.
+    - Ensure the license of the dependency is compatible with the project's license.
+    - Keep the THIRD-PARTY-LICENSES.md file up to date.
+
 ### Build
 
 To combine the build with automated testing and the generation of the THIRD-PARTY-LICENSES.md file, run the following command:
