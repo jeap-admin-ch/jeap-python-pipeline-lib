@@ -43,20 +43,14 @@ A collection of Python modules and libraries for CI/CD pipelines with jEAP conte
     - Update the version number in the `pyproject.toml` file.
     - Ensure the version number complies with semantic versioning and the PEP 440 standard.
 
-### Check licenses of dependencies and generate THIRD-PARTY-LICENSES.md
+### Build
 
-To check the licenses of the dependencies, run the following command:
-```bash
-python3 scripts/check_licenses.py
-```
+To combine the build with automated testing and the generation of the THIRD-PARTY-LICENSES.md file, run the following command:
 
-Or combi it with a build:
 ```bash
 python3 scripts/full_build.py
 ```
-
-### Build
-
+If you did like to execute single steps, you can use the following commands.
 A more comprehensive documentation can be found here: https://packaging.python.org/en/latest/tutorials/packaging-projects/
 
 Install the build tool via pip. Make sure you have the latest version of PyPA’s build installed:
@@ -92,11 +86,11 @@ You can use pip to install your package and verify that it works. Create a virtu
 python3 -m pip install -i https://test.pypi.org/simple/ jeap-pipeline==0.1.0
 ```
 
-### Generate THIRD-PARTY-LICENSES.md
+### Check licenses of dependencies and generate THIRD-PARTY-LICENSES.md
 
-To generate the THIRD-PARTY-LICENSES.md file, run the following command:
+To check the licenses of the dependencies and generate the THIRD-PARTY-LICENSES.md file, run the following command:
 ```bash
-pip-licenses --from=direct --format=markdown --output-file=THIRD-PARTY-LICENSES.md
+python3 scripts/check_licenses.py
 ```
 
 ## Publishing
