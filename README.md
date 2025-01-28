@@ -22,6 +22,11 @@ A collection of Python modules and libraries for CI/CD pipelines with jEAP conte
     pip install -r requirements.txt
     ```
 
+4. Or install tools for development:
+    ```bash
+    pip install build twine pip-licenses
+    ```
+
 ### Development basics
 
 * **Adding New Modules**:
@@ -37,6 +42,18 @@ A collection of Python modules and libraries for CI/CD pipelines with jEAP conte
 * **Changing the Version**:
     - Update the version number in the `pyproject.toml` file.
     - Ensure the version number complies with semantic versioning and the PEP 440 standard.
+
+### Check licenses of dependencies and generate THIRD-PARTY-LICENSES.md
+
+To check the licenses of the dependencies, run the following command:
+```bash
+python3 scripts/check_licenses.py
+```
+
+Or combi it with a build:
+```bash
+python3 scripts/full_build.py
+```
 
 ### Build
 
@@ -79,11 +96,8 @@ python3 -m pip install -i https://test.pypi.org/simple/ jeap-pipeline==0.1.0
 
 To generate the THIRD-PARTY-LICENSES.md file, run the following command:
 ```bash
-python -m third_party_license_file_generator -r requirements.txt -p /usr/bin/python3 -o THIRD-PARTY-LICENSES.md
+pip-licenses --from=direct --format=markdown --output-file=THIRD-PARTY-LICENSES.md
 ```
-* `-r` REQUIREMENTS_PATH: Path to the requirements.txt file, which contains the dependencies of the project.
-* `-p` PYTHON_PATH: Path to the Python interpreter, which is used to execute the license-checker.
-* `-o` OUTPUT_FILE: Name of the output file, which contains the license information of the dependencies.
 
 ## Publishing
 

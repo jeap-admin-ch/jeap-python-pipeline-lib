@@ -48,11 +48,11 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip install build twine third-party-license-file-generator
+          pip install build twine pip-licenses
 
-      - name: Generate THIRD-PARTY-LICENSES.md
+      - name: Run license check script
         run: |
-          python -m third_party_license_file_generator -r requirements.txt -p $(which python3) -o THIRD-PARTY-LICENSES.md
+          python scripts/check_licenses.py
 
       - name: Build package
         run: python3 -m build

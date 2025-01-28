@@ -74,6 +74,7 @@ docs/_build/
 
 # PyBuilder
 target/
+licenses.json
 
 # Jupyter Notebook
 .ipynb_checkpoints
