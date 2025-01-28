@@ -1,0 +1,8 @@
+include README.md
+include LICENSE
+include requirements.txt
+include THIRD-PARTY-LICENSES.md
+recursive-include src *.py
+recursive-include docs *.md
+exclude *.pyc
+recursive-exclude tests *

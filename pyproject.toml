@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeap_pipeline"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     { name="Laris Jacobs", email="laris.jacobs@bit.admin.ch" },
 ]
@@ -15,9 +15,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-license = "MIT"
+license = "Apache License 2.0"
 license-files = ["LICEN[CS]E*"]
 
 [project.urls]
 Homepage = "https://github.com/jeap-admin-ch/jeap-python-pipeline-lib"
 Issues = "https://github.com/jeap-admin-ch/jeap-python-pipeline-lib"
+
+[tool.third-party-license-file-generator]
+requirements-path = "requirements.txt"
+output-file = "THIRD-PARTY-LICENSES.md"
