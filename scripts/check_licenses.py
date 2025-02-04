@@ -8,7 +8,7 @@ def check_licenses():
         "Apache-2.0", "MIT", "MIT License", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib",
         "Apache Software License", "Python Software Foundation License",
         "Historical Permission Notice and Disclaimer (HPND)", "Mozilla Public License 2.0 (MPL 2.0)",
-        "ISC License (ISCL)", "Public Domain", "BSD License"
+        "ISC License (ISCL)", "Public Domain", "BSD License", "GNU Library or Lesser General Public License (LGPL)"
     ]
 
     # Run pip-licenses and save the output to a JSON file

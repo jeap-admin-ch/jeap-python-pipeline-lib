@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.2.0] - 2025-01-31
+
+### Added
+
+- Added module ecs_deployment_checker and github_dispatch_event.
+
 ## [0.1.3] - 2025-01-28
 
 ### Added
