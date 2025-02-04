@@ -1,2 +1,3 @@
 # __init__.py
 from .ecs_deployment_checker import wait_until_new_deployment_has_occurred
+from .github_dispatch_event import send_dispatch_event
