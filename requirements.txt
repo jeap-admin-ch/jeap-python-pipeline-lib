@@ -3,4 +3,4 @@ pip-licenses
 pytest
 build
 boto3~=1.36.9
-requests~=2.25.1
+requests~=2.32.0
