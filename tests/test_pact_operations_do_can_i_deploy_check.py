@@ -25,8 +25,8 @@ class TestDoCanIDeployCheck(unittest.TestCase):
                 "--pacticipant", "test_pacticipant",
                 "--version", "1.0.0",
                 "--to-environment", "test_env",
-                "--retry-while-unknown", "60",
-                "--retry-interval", "10"
+                "--retry-while-unknown", "6",
+                "--retry-interval", "5"
             ],
             capture_output=True,
             text=True
@@ -53,8 +53,8 @@ class TestDoCanIDeployCheck(unittest.TestCase):
                 "--pacticipant", "test_pacticipant",
                 "--version", "1.0.0",
                 "--to-environment", "test_env",
-                "--retry-while-unknown", "60",
-                "--retry-interval", "10"
+                "--retry-while-unknown", "6",
+                "--retry-interval", "5"
             ],
             capture_output=True,
             text=True
