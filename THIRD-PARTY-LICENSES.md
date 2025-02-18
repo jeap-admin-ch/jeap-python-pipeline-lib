@@ -3,17 +3,17 @@
 | Pygments           | 2.19.1      | BSD License                                                                                      |
 | SecretStorage      | 3.3.3       | BSD License                                                                                      |
 | backports.tarfile  | 1.2.0       | MIT License                                                                                      |
-| boto3              | 1.36.12     | Apache Software License                                                                          |
-| botocore           | 1.36.12     | Apache Software License                                                                          |
+| boto3              | 1.36.22     | Apache Software License                                                                          |
+| botocore           | 1.36.22     | Apache Software License                                                                          |
 | build              | 1.2.2.post1 | MIT License                                                                                      |
 | certifi            | 2025.1.31   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
 | cffi               | 1.17.1      | MIT License                                                                                      |
-| chardet            | 4.0.0       | GNU Library or Lesser General Public License (LGPL)                                              |
-| cryptography       | 44.0.0      | Apache Software License; BSD License                                                             |
+| charset-normalizer | 3.4.1       | MIT License                                                                                      |
+| cryptography       | 44.0.1      | Apache Software License; BSD License                                                             |
 | docutils           | 0.21.2      | BSD License; GNU General Public License (GPL); Public Domain; Python Software Foundation License |
 | exceptiongroup     | 1.2.2       | MIT License                                                                                      |
 | id                 | 1.5.0       | Apache Software License                                                                          |
-| idna               | 2.10        | BSD License                                                                                      |
+| idna               | 3.10        | BSD License                                                                                      |
 | importlib_metadata | 8.6.1       | Apache Software License                                                                          |
 | iniconfig          | 2.0.0       | MIT License                                                                                      |
 | jaraco.classes     | 3.4.0       | MIT License                                                                                      |
@@ -33,7 +33,7 @@
 | pytest             | 8.3.4       | MIT License                                                                                      |
 | python-dateutil    | 2.9.0.post0 | Apache Software License; BSD License                                                             |
 | readme_renderer    | 44.0        | Apache Software License                                                                          |
-| requests           | 2.25.1      | Apache Software License                                                                          |
+| requests           | 2.32.3      | Apache Software License                                                                          |
 | requests-toolbelt  | 1.0.0       | Apache Software License                                                                          |
 | rfc3986            | 2.0.0       | Apache Software License                                                                          |
 | rich               | 13.9.4      | MIT License                                                                                      |
@@ -41,5 +41,5 @@
 | six                | 1.17.0      | MIT License                                                                                      |
 | twine              | 6.1.0       | Apache Software License                                                                          |
 | typing_extensions  | 4.12.2      | Python Software Foundation License                                                               |
-| urllib3            | 1.26.20     | MIT License                                                                                      |
+| urllib3            | 2.3.0       | MIT License                                                                                      |
 | zipp               | 3.21.0      | MIT License                                                                                      |
