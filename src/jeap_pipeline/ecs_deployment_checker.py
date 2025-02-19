@@ -1,30 +1,32 @@
 import boto3
 import time
+from typing import Optional, Dict, Any
 
 
-def _get_primary_deployment(client, cluster_name, service_name):
+def _get_primary_deployment(client: boto3.client, cluster_name: str, service_name: str) -> Optional[Dict[str, Any]]:
     response = client.describe_services(cluster=cluster_name, services=[service_name])
     deployments = response['services'][0]['deployments']
     return next((d for d in deployments if d['status'] == 'PRIMARY'), None)
 
 
-def _get_task_definition(client, task_definition_arn):
+def _get_task_definition(client: boto3.client, task_definition_arn: str) -> Dict[str, Any]:
     task_definition = client.describe_task_definition(taskDefinition=task_definition_arn)
     return task_definition['taskDefinition']
 
 
-def _check_image_version(task_definition, expected_image_version):
+def _check_image_version(task_definition: Dict[str, Any], expected_image_version: str) -> bool:
     container_definitions = task_definition['containerDefinitions']
     image = container_definitions[0]['image']
     return image.endswith(expected_image_version)
 
 
-def wait_until_new_deployment_has_occurred(cluster_name,
-                                           service_name,
-                                           expected_image_version,
-                                           aws_region, interval=5,
-                                           max_duration=600,
-                                           verify_ssl=True):
+def wait_until_new_deployment_has_occurred(cluster_name: str,
+                                           service_name: str,
+                                           expected_image_version: str,
+                                           aws_region: str,
+                                           interval: int = 5,
+                                           max_duration: int = 600,
+                                           verify_ssl: bool = True) -> str:
     """
     Waits until a new ECS deployment with the expected image version has completed.
     Make sure to set the following environment variables before running the script:
@@ -69,4 +71,3 @@ def wait_until_new_deployment_has_occurred(cluster_name,
 
     raise Exception(f"The deployment of {service_name} with image version {expected_image_version} is not available "
                     f"after {max_duration // 60} minutes")
-
