@@ -1,12 +1,11 @@
 import boto3
 import time
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
-
-def _get_primary_deployment(client: boto3.client, cluster_name: str, service_name: str) -> Optional[Dict[str, Any]]:
+def _get_primary_deployment(client: boto3.client, cluster_name: str, service_name: str) -> Dict[str, Any]:
     response = client.describe_services(cluster=cluster_name, services=[service_name])
     deployments = response['services'][0]['deployments']
-    return next((d for d in deployments if d['status'] == 'PRIMARY'), None)
+    return next((d for d in deployments if d['status'] == 'PRIMARY'), {})
 
 
 def _get_task_definition(client: boto3.client, task_definition_arn: str) -> Dict[str, Any]:
