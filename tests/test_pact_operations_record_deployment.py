@@ -52,7 +52,7 @@ class TestRecordDeployment(unittest.TestCase):
                 "record-deployment",
                 "--pacticipant", "test_pacticipant",
                 "--version", "1.0.0",
-                "--to-environment", "test_env",
+                "--environment", "test_env",
                 "--retry-while-unknown", "6",
                 "--retry-interval", "5"
             ],
