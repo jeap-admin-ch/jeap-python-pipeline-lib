@@ -51,9 +51,7 @@ def do_can_i_deploy_check(pact_pacticipant_name: str,
 
 def record_deployment(pact_pacticipant_name: str,
                       pacticipant_version: str,
-                      current_stage: str,
-                      retry_attempts: int = 6,
-                      retry_interval: int = 5) -> None:
+                      current_stage: str) -> None:
     """
     Record the deployment of a Pact participant to a specified environment.
 
@@ -66,8 +64,6 @@ def record_deployment(pact_pacticipant_name: str,
         pact_pacticipant_name (str): The name of the Pact participant.
         pacticipant_version (str): The version of the Pact participant.
         current_stage (str): The environment to which the deployment is being checked.
-        retry_attempts (int, optional): The number of retry intervals to wait while the status is unknown. Defaults to 6 attempts.
-        retry_interval (int, optional): The interval between retries while the status is unknown. Defaults to 5 seconds.
 
     Raises:
         RuntimeError: If the recording fails.
@@ -80,9 +76,7 @@ def record_deployment(pact_pacticipant_name: str,
         "record-deployment",
         "--pacticipant", pact_pacticipant_name,
         "--version", pacticipant_version,
-        "--environment", current_stage,
-        "--retry-while-unknown", str(retry_attempts),
-        "--retry-interval", str(retry_interval)
+        "--environment", current_stage
     ]
 
     print(f"Running pact-cli command: {' '.join(command)}")
