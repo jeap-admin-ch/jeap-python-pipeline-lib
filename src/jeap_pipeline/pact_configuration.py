@@ -18,13 +18,13 @@ def is_pact_can_i_deploy_check_enabled(environment: str, pact_can_i_deploy_check
     return pact_can_i_deploy_check_environments is not None and environment in pact_can_i_deploy_check_environments
 
 
-def is_pact_enabled_for_service_and_stage(actual_environment: str, service_name: str, pact_environments: Optional[List[str]],
+def is_pact_enabled_for_service_and_stage(current_stage: str, service_name: str, pact_environments: Optional[List[str]],
                                           is_pact_pacticipant: bool, pact_pacticipants: Optional[List[str]]) -> bool:
     """
     Check if Pact is enabled for the given service and environment.
 
     Args:
-        actual_environment (str): The environment to check.
+        current_stage (str): The environment to check.
         service_name (str): The name of the service.
         pact_environments (Optional[List[str]]): List of environments for which Pact integration is enabled.
         is_pact_pacticipant (bool): Flag indicating if the app is a Pact participant.
@@ -33,7 +33,7 @@ def is_pact_enabled_for_service_and_stage(actual_environment: str, service_name:
     Returns:
         bool: True if can-i-deploy check is enabled, False otherwise.
     """
-    if pact_environments and actual_environment in pact_environments:
+    if pact_environments and current_stage in pact_environments:
         if is_pact_pacticipant or (pact_pacticipants and service_name in pact_pacticipants):
             return True
     return False

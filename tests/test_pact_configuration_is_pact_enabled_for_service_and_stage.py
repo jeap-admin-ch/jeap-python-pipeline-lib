@@ -6,7 +6,7 @@ class TestIsPactEnabledForServiceAndStage(unittest.TestCase):
 
     def test_pact_enabled(self):
         result = is_pact_enabled_for_service_and_stage(
-            actual_environment="test_env",
+            current_stage="test_env",
             service_name="test_service",
             pact_environments=["test_env", "prod_env"],
             is_pact_pacticipant=True,
@@ -16,7 +16,7 @@ class TestIsPactEnabledForServiceAndStage(unittest.TestCase):
 
     def test_pact_disabled(self):
         result = is_pact_enabled_for_service_and_stage(
-            actual_environment="dev_env",
+            current_stage="dev_env",
             service_name="test_service",
             pact_environments=["test_env", "prod_env"],
             is_pact_pacticipant=False,
@@ -26,7 +26,7 @@ class TestIsPactEnabledForServiceAndStage(unittest.TestCase):
 
     def test_pact_enabled_for_service(self):
         result = is_pact_enabled_for_service_and_stage(
-            actual_environment="test_env",
+            current_stage="test_env",
             service_name="test_service",
             pact_environments=["test_env", "prod_env"],
             is_pact_pacticipant=False,
