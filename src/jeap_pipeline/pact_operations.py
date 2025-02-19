@@ -79,7 +79,7 @@ def record_deployment(pact_pacticipant_name,
         "record-deployment",
         "--pacticipant", pact_pacticipant_name,
         "--version", pacticipant_version,
-        "--to-environment", actual_environment,
+        "--environment", actual_environment,
         "--retry-while-unknown", str(retry_attempts),
         "--retry-interval", str(retry_interval)
     ]
