@@ -1,11 +1,12 @@
 import subprocess
+from typing import Optional
 
 
-def do_can_i_deploy_check(pact_pacticipant_name,
-                          pacticipant_version,
-                          actual_environment,
-                          retry_attempts=6,
-                          retry_interval=5):
+def do_can_i_deploy_check(pact_pacticipant_name: str,
+                          pacticipant_version: str,
+                          current_stage: str,
+                          retry_attempts: int = 6,
+                          retry_interval: int = 5) -> None:
     """
     Check if a Pact participant can be deployed to a specified environment.
 
@@ -16,7 +17,7 @@ def do_can_i_deploy_check(pact_pacticipant_name,
     Args:
         pact_pacticipant_name (str): The name of the Pact participant.
         pacticipant_version (str): The version of the Pact participant.
-        actual_environment (str): The environment to which the deployment is being checked.
+        current_stage (str): The environment to which the deployment is being checked.
         retry_attempts (int, optional): The number of retry intervals to wait while the status is unknown. Defaults to 6 attempts.
         retry_interval (int, optional): The interval between retries while the status is unknown. Defaults to 5 seconds.
 
@@ -31,7 +32,7 @@ def do_can_i_deploy_check(pact_pacticipant_name,
         "can-i-deploy",
         "--pacticipant", pact_pacticipant_name,
         "--version", pacticipant_version,
-        "--to-environment", actual_environment,
+        "--to-environment", current_stage,
         "--retry-while-unknown", str(retry_attempts),
         "--retry-interval", str(retry_interval)
     ]
@@ -41,18 +42,18 @@ def do_can_i_deploy_check(pact_pacticipant_name,
     print(result.stdout)
 
     if result.returncode == 0:
-        print(f"Can deploy {pact_pacticipant_name} version {pacticipant_version} to {actual_environment}")
+        print(f"Can deploy {pact_pacticipant_name} version {pacticipant_version} to {current_stage}")
     else:
-        error_message = f"Cannot deploy {pact_pacticipant_name} version {pacticipant_version} to {actual_environment}: {result.stderr}"
+        error_message = f"Cannot deploy {pact_pacticipant_name} version {pacticipant_version} to {current_stage}: {result.stderr}"
         print(error_message)
         raise ValueError(error_message)
 
 
-def record_deployment(pact_pacticipant_name,
-                      pacticipant_version,
-                      actual_environment,
-                      retry_attempts=6,
-                      retry_interval=5):
+def record_deployment(pact_pacticipant_name: str,
+                      pacticipant_version: str,
+                      current_stage: str,
+                      retry_attempts: int = 6,
+                      retry_interval: int = 5) -> None:
     """
     Record the deployment of a Pact participant to a specified environment.
 
@@ -64,7 +65,7 @@ def record_deployment(pact_pacticipant_name,
     Args:
         pact_pacticipant_name (str): The name of the Pact participant.
         pacticipant_version (str): The version of the Pact participant.
-        actual_environment (str): The environment to which the deployment is being checked.
+        current_stage (str): The environment to which the deployment is being checked.
         retry_attempts (int, optional): The number of retry intervals to wait while the status is unknown. Defaults to 6 attempts.
         retry_interval (int, optional): The interval between retries while the status is unknown. Defaults to 5 seconds.
 
@@ -79,7 +80,7 @@ def record_deployment(pact_pacticipant_name,
         "record-deployment",
         "--pacticipant", pact_pacticipant_name,
         "--version", pacticipant_version,
-        "--environment", actual_environment,
+        "--environment", current_stage,
         "--retry-while-unknown", str(retry_attempts),
         "--retry-interval", str(retry_interval)
     ]
@@ -90,8 +91,8 @@ def record_deployment(pact_pacticipant_name,
     print(result.stdout)
 
     if result.returncode == 0:
-        print(f"Deployment for {pact_pacticipant_name} version {pacticipant_version} to {actual_environment} is recorded")
+        print(f"Deployment for {pact_pacticipant_name} version {pacticipant_version} to {current_stage} is recorded")
     else:
-        error_message = f"Cannot record deployment of {pact_pacticipant_name} version {pacticipant_version} to {actual_environment}: {result.stderr}"
+        error_message = f"Cannot record deployment of {pact_pacticipant_name} version {pacticipant_version} to {current_stage}: {result.stderr}"
         print(error_message)
         raise RuntimeError(error_message)

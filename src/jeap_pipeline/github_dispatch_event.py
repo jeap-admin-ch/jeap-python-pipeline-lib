@@ -1,9 +1,10 @@
 import os
 import requests
 import json
+from typing import Optional
 
 
-def send_dispatch_event(organization, repository_name, stage, version, services):
+def send_dispatch_event(organization: str, repository_name: str, stage: str, version: str, services: str) -> None:
     """
     Sends a GitHub Repository Dispatch Event to trigger workflows.
 
@@ -23,7 +24,10 @@ def send_dispatch_event(organization, repository_name, stage, version, services)
     Raises:
         requests.exceptions.RequestException: If the request to the GitHub API fails.
     """
-    github_token = os.getenv('GITHUB_TOKEN')
+    github_token: Optional[str] = os.getenv('GITHUB_TOKEN')
+
+    if not github_token:
+        raise EnvironmentError("GITHUB_TOKEN environment variable is not set")
 
     services_list = services.split(',')
     payload = {

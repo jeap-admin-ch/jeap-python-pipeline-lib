@@ -1,7 +1,6 @@
-from typing import Set, Optional, List
+from typing import Set, List
 
-
-def is_pact_can_i_deploy_check_enabled(environment, pact_can_i_deploy_check_environments):
+def is_pact_can_i_deploy_check_enabled(environment: str, pact_can_i_deploy_check_environments: List[str]) -> bool:
     """
     Check if the 'can-i-deploy' check is enabled for a given environment.
 
@@ -10,41 +9,41 @@ def is_pact_can_i_deploy_check_enabled(environment, pact_can_i_deploy_check_envi
 
     Args:
         environment (str): The environment to check.
-        pact_can_i_deploy_check_environments (list or None): A list of environments where the 'can-i-deploy' check is enabled.
+        pact_can_i_deploy_check_environments (List[str]): A list of environments where the 'can-i-deploy' check is enabled.
 
     Returns:
         bool: True if the 'can-i-deploy' check is enabled for the specified environment, False otherwise.
     """
-    return pact_can_i_deploy_check_environments is not None and environment in pact_can_i_deploy_check_environments
+    return environment in pact_can_i_deploy_check_environments
 
 
-def is_pact_enabled_for_service_and_stage(actual_environment, service_name, pact_environments,
-                                          is_pact_pacticipant, pact_pacticipants):
+def is_pact_enabled_for_service_and_stage(current_stage: str, service_name: str, pact_environments: List[str],
+                                          is_pact_pacticipant: bool, pact_pacticipants: List[str]) -> bool:
     """
     Check if Pact is enabled for the given service and environment.
 
     Args:
-        actual_environment (str): The environment to check.
+        current_stage (str): The environment to check.
         service_name (str): The name of the service.
-        pact_environments (list): List of environments for which Pact integration is enabled.
+        pact_environments (List[str]): List of environments for which Pact integration is enabled.
         is_pact_pacticipant (bool): Flag indicating if the app is a Pact participant.
-        pact_pacticipants (list): List of Pact participants in a project with multiple deployables.
+        pact_pacticipants (List[str]): List of Pact participants in a project with multiple deployables.
 
     Returns:
         bool: True if can-i-deploy check is enabled, False otherwise.
     """
-    if pact_environments and actual_environment in pact_environments:
-        if is_pact_pacticipant or (pact_pacticipants and service_name in pact_pacticipants):
+    if current_stage in pact_environments:
+        if is_pact_pacticipant or service_name in pact_pacticipants:
             return True
     return False
 
 
-def verify_pact_configuration(pact_pacticipants: Optional[List[str]], is_pact_pacticipant: bool, services: List[str]):
+def verify_pact_configuration(pact_pacticipants: List[str], is_pact_pacticipant: bool, services: List[str]) -> None:
     """
     Verifies the Pact configuration by checking if the provided pactPacticipants are valid service names.
 
     Args:
-        pact_pacticipants (Optional[List[str]]): A list of pactPacticipants to verify. Can be None.
+        pact_pacticipants (List[str]): A list of pactPacticipants to verify.
         is_pact_pacticipant (bool): A flag indicating if the current service is a pactPacticipant.
         services (List[str]): A list of valid service names.
 

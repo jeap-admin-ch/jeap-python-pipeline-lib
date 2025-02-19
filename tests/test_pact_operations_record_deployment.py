@@ -15,7 +15,7 @@ class TestRecordDeployment(unittest.TestCase):
         pact_operations.record_deployment(
             pact_pacticipant_name="test_pacticipant",
             pacticipant_version="1.0.0",
-            actual_environment="test_env"
+            current_stage="test_env"
         )
 
         mock_subprocess_run.assert_called_once_with(
@@ -43,7 +43,7 @@ class TestRecordDeployment(unittest.TestCase):
             pact_operations.record_deployment(
                 pact_pacticipant_name="test_pacticipant",
                 pacticipant_version="1.0.0",
-                actual_environment="test_env"
+                current_stage="test_env"
             )
 
         mock_subprocess_run.assert_called_once_with(
