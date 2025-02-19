@@ -25,7 +25,7 @@ class TestVerifyPactConfiguration(unittest.TestCase):
     def test_verify_no_pact_pacticipants(self):
         try:
             verify_pact_configuration(
-                pact_pacticipants=None,
+                pact_pacticipants=[],
                 is_pact_pacticipant=False,
                 services=["service1", "service2", "service3"]
             )

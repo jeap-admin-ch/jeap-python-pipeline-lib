@@ -21,7 +21,7 @@ class TestIsPactCanIDeployCheckEnabled(unittest.TestCase):
     def test_check_no_environments(self):
         result = is_pact_can_i_deploy_check_enabled(
             environment="test_env",
-            pact_can_i_deploy_check_environments=None
+            pact_can_i_deploy_check_environments=[]
         )
         self.assertFalse(result)
 

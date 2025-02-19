@@ -10,8 +10,8 @@ class TestGetPacticipantNames(unittest.TestCase):
             app_name="app1",
             department="dept1",
             pact_pacticipant_name=None,
-            pact_pacticipant_names=None,
-            pact_provider_api_names=None
+            pact_pacticipant_names=[],
+            pact_provider_api_names=[]
         )
         self.assertEqual(result, ["dept1-app1"])
 
@@ -20,8 +20,8 @@ class TestGetPacticipantNames(unittest.TestCase):
             app_name="app1",
             department="dept1",
             pact_pacticipant_name="specific_name",
-            pact_pacticipant_names=None,
-            pact_provider_api_names=None
+            pact_pacticipant_names=[],
+            pact_provider_api_names=[]
         )
         self.assertEqual(result, ["specific_name"])
 
@@ -30,7 +30,7 @@ class TestGetPacticipantNames(unittest.TestCase):
             app_name="app1",
             department="dept1",
             pact_pacticipant_name=None,
-            pact_pacticipant_names=None,
+            pact_pacticipant_names=[],
             pact_provider_api_names=["api1", "api2"]
         )
         self.assertEqual(result, ["dept1-app1_api1", "dept1-app1_api2"])
@@ -41,7 +41,7 @@ class TestGetPacticipantNames(unittest.TestCase):
             department="dept1",
             pact_pacticipant_name=None,
             pact_pacticipant_names={"app1": "custom_name"},
-            pact_provider_api_names=None
+            pact_provider_api_names=[]
         )
         self.assertEqual(result, ["custom_name"])
 

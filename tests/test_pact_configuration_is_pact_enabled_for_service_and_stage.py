@@ -10,7 +10,7 @@ class TestIsPactEnabledForServiceAndStage(unittest.TestCase):
             service_name="test_service",
             pact_environments=["test_env", "prod_env"],
             is_pact_pacticipant=True,
-            pact_pacticipants=None
+            pact_pacticipants=[]
         )
         self.assertTrue(result)
 
@@ -20,7 +20,7 @@ class TestIsPactEnabledForServiceAndStage(unittest.TestCase):
             service_name="test_service",
             pact_environments=["test_env", "prod_env"],
             is_pact_pacticipant=False,
-            pact_pacticipants=None
+            pact_pacticipants=[]
         )
         self.assertFalse(result)
 
