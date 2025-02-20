@@ -15,7 +15,7 @@ class TestSendDispatchEvent(unittest.TestCase):
         mock_response.raise_for_status = MagicMock()
         mock_post.return_value = mock_response
 
-        send_dispatch_event('my-org', 'my-repo', 'dev', 'v1.0.0', 'service1,service2')
+        send_dispatch_event('my-org', 'my-repo', 'dev', 'v1.0.0', ['service1', 'service2'])
         mock_getenv.assert_called_once_with('GITHUB_TOKEN')
 
         expected_url = 'https://api.github.com/repos/my-org/my-repo/dispatches'
