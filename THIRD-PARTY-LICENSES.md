@@ -3,8 +3,8 @@
 | Pygments           | 2.19.1      | BSD License                                                                                      |
 | SecretStorage      | 3.3.3       | BSD License                                                                                      |
 | backports.tarfile  | 1.2.0       | MIT License                                                                                      |
-| boto3              | 1.36.23     | Apache Software License                                                                          |
-| botocore           | 1.36.23     | Apache Software License                                                                          |
+| boto3              | 1.36.24     | Apache Software License                                                                          |
+| botocore           | 1.36.24     | Apache Software License                                                                          |
 | build              | 1.2.2.post1 | MIT License                                                                                      |
 | certifi            | 2025.1.31   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
 | cffi               | 1.17.1      | MIT License                                                                                      |
