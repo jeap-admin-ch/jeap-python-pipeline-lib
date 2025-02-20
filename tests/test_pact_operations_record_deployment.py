@@ -24,9 +24,7 @@ class TestRecordDeployment(unittest.TestCase):
                 "record-deployment",
                 "--pacticipant", "test_pacticipant",
                 "--version", "1.0.0",
-                "--environment", "test_env",
-                "--retry-while-unknown", "6",
-                "--retry-interval", "5"
+                "--environment", "test_env"
             ],
             capture_output=True,
             text=True
@@ -52,9 +50,7 @@ class TestRecordDeployment(unittest.TestCase):
                 "record-deployment",
                 "--pacticipant", "test_pacticipant",
                 "--version", "1.0.0",
-                "--environment", "test_env",
-                "--retry-while-unknown", "6",
-                "--retry-interval", "5"
+                "--environment", "test_env"
             ],
             capture_output=True,
             text=True
