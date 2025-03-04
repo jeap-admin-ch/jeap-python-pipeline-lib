@@ -35,10 +35,10 @@ def put_to_deployment_log_service(url, deployment_id, deployment_log_json, usern
     return __request_deployment_log_service(api_url, "PUT", deployment_log_json, username, password)
 
 
-def __request_deployment_log_service(url, method, json, username, password, fail_on_failure: bool = True):
+def __request_deployment_log_service(url, method, request_body, username, password, fail_on_failure: bool = True):
     headers = {"Content-Type": "application/json"}
     auth = HTTPBasicAuth(username, password)
-    response = request(method, url, json=json, auth=auth, headers=headers)
+    response = request(method, url, json=json.loads(request_body), auth=auth, headers=headers)
     if response.status_code >= 400:
         logging.error(f"Request failed with status code {response.status_code}: {response.text}")
         if fail_on_failure:
