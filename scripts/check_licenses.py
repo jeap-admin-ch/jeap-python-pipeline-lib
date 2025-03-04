@@ -11,8 +11,18 @@ def check_licenses():
         "ISC License (ISCL)", "Public Domain", "BSD License", "GNU Library or Lesser General Public License (LGPL)"
     ]
 
+    # List of packages to ignore
+    # Jeepney is licensed under MIT (https://pypi.org/project/jeepney/), but cannot be seen by pip-licenses
+    ignored_packages = ["Jeepney"]
+
     # Run pip-licenses and save the output to a JSON file
-    subprocess.run(["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"], check=True)
+    command = ["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"]
+
+    if ignored_packages:
+        command.append("--ignore-packages")
+    command.append(",".join(ignored_packages))
+
+    subprocess.run(command, check=True)
 
     # Load the JSON file
     with open('licenses.json', 'r') as file:
