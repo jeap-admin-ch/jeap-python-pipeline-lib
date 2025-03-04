@@ -10,9 +10,7 @@ def put_deployment_state(url, deployment_id, deployment_state, username, passwor
     api_url = url + "/api/deployment/" + deployment_id + "/state"
 
     if message is not None:
-        message = message.replace('\r', ' ')
-        message = message.replace('\n', ' ')
-        message = message.replace('"', '\'')
+        message = str(message).replace('\r', ' ').replace('\n', ' ').replace('"', '\'')
 
     json_obj = {
         "timestamp": __get_actual_timestamp(),
