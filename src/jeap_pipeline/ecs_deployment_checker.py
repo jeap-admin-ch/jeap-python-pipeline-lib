@@ -61,6 +61,7 @@ def wait_until_new_deployment_has_occurred(cluster_name: str,
 
                 if _check_image_version(task_definition, expected_image_version):
                     print(f"Deployment completed with image version {expected_image_version}")
+                    print(f"Hallo World")
                     return task_definition_arn
         except client.exceptions.ClientError as e:
             print(f"Error: {e}")
