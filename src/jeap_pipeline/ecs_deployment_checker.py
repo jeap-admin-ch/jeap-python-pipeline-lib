@@ -52,6 +52,7 @@ def wait_until_new_deployment_has_occurred(cluster_name: str,
     max_calls = max_duration // interval
 
     max_calls = 1 # This is a temporary to make the deployment fail
+    expected_image_version = "v1.0.0" # This is a temporary to make the deployment fail
 
     while call_count <= max_calls:
         try:
