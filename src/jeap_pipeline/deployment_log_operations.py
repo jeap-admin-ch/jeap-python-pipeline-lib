@@ -21,6 +21,8 @@ def put_deployment_state(url, deployment_id, deployment_state, username, passwor
         "properties": properties if properties else {}
     }
     request_json = json.dumps(json_obj)
+    print(f"@@@ api_url: {api_url}")
+    print(f"@@@ request_json: {request_json}")
 
     return __request_deployment_log_service(api_url, "PUT", request_json, username, password)
 
