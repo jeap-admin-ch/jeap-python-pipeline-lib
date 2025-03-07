@@ -2,7 +2,7 @@ import json
 import unittest
 from unittest.mock import patch, Mock
 
-from src.jeap_pipeline import put_deployment_state, put_to_deployment_log_service, get_previous_deployment_on_environment
+from src.jeap_pipeline import put_deployment_state, put_to_deployment_log_service, get_previous_deployment_on_environment, put_artifacts_version
 
 class TestDeploymentLogOperations(unittest.TestCase):
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
@@ -40,3 +40,15 @@ class TestDeploymentLogOperations(unittest.TestCase):
         mock_request.return_value = mock_response
         response = get_previous_deployment_on_environment("http://example.com", "system", "component", "env", "1.0", "user", "pass")
         self.assertIsNone(response)
+
+    @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
+    def put_artifacts_version_success(self, mock_request):
+        mock_request.return_value.status_code = 200
+        response = put_artifacts_version("http://example.com", "coordinates", "http://build.url", "user", "pass")
+        self.assertEqual(response.status_code, 200)
+
+    @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
+    def put_artifacts_version_failure(self, mock_request):
+        mock_request.return_value.status_code = 500
+        response = put_artifacts_version("http://example.com", "coordinates", "http://build.url", "user", "pass")
+        self.assertEqual(response.status_code, 500)

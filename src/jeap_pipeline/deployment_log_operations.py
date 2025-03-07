@@ -90,7 +90,19 @@ def get_previous_deployment_on_environment(url, system, component, environment, 
     return response_json_data
 
 def put_artifacts_version(url, coordinates, build_url, username, password):
+    """
+    Update the artifact version in the deployment log service.
 
+    Args:
+        url (str): The base URL of the deployment service.
+        coordinates (str): The coordinates of the artifact.
+        build_url (str): The URL of the build job.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+
+    Returns:
+        Response: The response from the deployment log service.
+    """
     request_body = {
         "coordinates": coordinates,
         "buildJobLink": build_url
@@ -102,7 +114,6 @@ def put_artifacts_version(url, coordinates, build_url, username, password):
     api_url = url + "/api/artifact-version/" + uuid
     print(f"### api_url: {api_url}")
     return __request_deployment_log_service(api_url, "PUT", request_body, username, password)
-
 
 def get_actual_timestamp():
     """
