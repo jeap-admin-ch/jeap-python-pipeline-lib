@@ -19,17 +19,13 @@ def put_deployment_state(url, deployment_id, deployment_state, username, passwor
         "properties": properties if properties else {}
     }
     request_json = json.dumps(json_obj)
-    print(f"@@@ api_url: {api_url}")
-    print(f"@@@ request_json: {request_json}")
 
     return __request_deployment_log_service(api_url, "PUT", request_json, username, password)
 
 
-def put_to_deployment_log_service(url, deployment_id, deployment_log_json, username, password,
-                                  ready_for_deploy_check: bool = False):
-    api_url = url + "/api/deployment/" + deployment_id + "?readyForDeployCheck=" + ready_for_deploy_check
-    print(f"### api_url: {api_url}")
-
+def put_to_deployment_log_service(url, deployment_id, deployment_log_json, username, password):
+    api_url = url + "/api/deployment/" + deployment_id + "?readyForDeployCheck=false"
+    print(f"### put_to_deployment_log_service: {api_url}")
     return __request_deployment_log_service(api_url, "PUT", deployment_log_json, username, password)
 
 
