@@ -89,7 +89,7 @@ def get_previous_deployment_on_environment(url, system, component, environment, 
     response_json_data = json.loads(response.text)
     return response_json_data
 
-def put_artifacts_version(url, coordinates, build_url):
+def put_artifacts_version(url, coordinates, build_url, username, password):
 
     request_body = json.dumps({
         "coordinates": coordinates,
@@ -101,7 +101,7 @@ def put_artifacts_version(url, coordinates, build_url):
     uuid = str(uuid4())
     api_url = url + "/api/artifact-version/" + uuid
     print(f"### api_url: {api_url}")
-    return __request_deployment_log_service(api_url, "PUT", request_body)
+    return __request_deployment_log_service(api_url, "PUT", request_body, username, password)
 
 
 def get_actual_timestamp():
