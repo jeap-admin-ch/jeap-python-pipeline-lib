@@ -1,4 +1,6 @@
 import json
+from uuid import uuid4
+
 import requests
 from datetime import datetime
 from requests import request
@@ -26,7 +28,7 @@ def put_deployment_state(url, deployment_id, deployment_state, username, passwor
         message = str(message).replace('\r', ' ').replace('\n', ' ').replace('"', "'")
 
     request_json = {
-        "timestamp": __get_actual_timestamp(),
+        "timestamp": get_actual_timestamp(),
         "state": deployment_state,
         "message": message if message else '',
         "properties": properties if properties else {}
@@ -87,6 +89,31 @@ def get_previous_deployment_on_environment(url, system, component, environment, 
     response_json_data = json.loads(response.text)
     return response_json_data
 
+def put_artifacts_version(url, coordinates, build_url):
+
+    request_body = json.dumps({
+        "coordinates": coordinates,
+        "buildJobLink": build_url
+    })
+
+    print(f"### request_body: {request_body}")
+
+    uuid = str(uuid4())
+    api_url = url + "/api/artifact-version/" + uuid
+    print(f"### api_url: {api_url}")
+    return __request_deployment_log_service(api_url, "PUT", request_body)
+
+
+def get_actual_timestamp():
+    """
+    Get the current timestamp in ISO 8601 format.
+
+    Returns:
+        str: The current timestamp.
+    """
+    actual_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    return actual_timestamp
+
 def __request_deployment_log_service(url, method, request_body, username, password, fail_on_failure: bool = True):
     """
     Make a request to the deployment log service.
@@ -111,12 +138,3 @@ def __request_deployment_log_service(url, method, request_body, username, passwo
             response.raise_for_status()
     return response
 
-def __get_actual_timestamp():
-    """
-    Get the current timestamp in ISO 8601 format.
-
-    Returns:
-        str: The current timestamp.
-    """
-    actual_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    return actual_timestamp
