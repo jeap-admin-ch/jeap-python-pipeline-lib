@@ -91,10 +91,10 @@ def get_previous_deployment_on_environment(url, system, component, environment, 
 
 def put_artifacts_version(url, coordinates, build_url, username, password):
 
-    request_body = json.dumps({
+    request_body = {
         "coordinates": coordinates,
         "buildJobLink": build_url
-    })
+    }
 
     print(f"### request_body: {request_body}")
 
