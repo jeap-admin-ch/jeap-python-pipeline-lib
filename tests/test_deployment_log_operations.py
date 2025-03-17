@@ -90,6 +90,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
             }
         }
 
+        deployment_platform = "AWS"
         actual_timestamp = "2023-10-01T12:00:00.000Z"
         system_name = "test-system"
         app_name = "test-app"
@@ -110,7 +111,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         dl_username = "user"
         dl_password = "pass"
 
-        deployment_json = create_deployment_json(
+        deployment_json = create_deployment_json(deployment_platform,
             actual_timestamp, system_name, app_name, cluster, deploy_stage, git_commit, git_commit_timestamp,
             version_control_url, pipeline_run_url, started_by, image_tag_aws, git_tag_timestamp, maven_published,
             remedy_change_id, aws_url, artifact_url, deployment_log_url, dl_username, dl_password

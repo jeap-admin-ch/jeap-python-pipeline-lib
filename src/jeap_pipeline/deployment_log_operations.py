@@ -165,7 +165,8 @@ def generate_deployment_id(component_name: str, env: str) -> str:
     return f"{component}-{env}-{timestamp}"
 
 
-def create_deployment_json(actual_timestamp: str,
+def create_deployment_json(deployment_platform: str,
+                           actual_timestamp: str,
                            system_name: str,
                            app_name: str,
                            cluster: str,
@@ -175,11 +176,12 @@ def create_deployment_json(actual_timestamp: str,
                            version_control_url: str,
                            pipeline_run_url: str,
                            started_by: str,
-                           image_tag_aws: str,
+                           image_tag: str,
                            git_tag_timestamp: str,
                            maven_published: str,
                            remedy_change_id: str,
-                           aws_url, artifact_url: str,
+                           deployment_target_url: str,
+                           artifact_url: str,
                            deployment_log_url: str,
                            dl_username: str,
                            dl_password: str):
@@ -187,6 +189,7 @@ def create_deployment_json(actual_timestamp: str,
     Create a JSON representation of a deployment.
 
     Args:
+        deployment_platform (str): The deployment platform. E.g., 'AWS'.
         actual_timestamp (str): The timestamp when the deployment started.
         system_name (str): The name of the system.
         app_name (str): The name of the application.
@@ -197,11 +200,11 @@ def create_deployment_json(actual_timestamp: str,
         version_control_url (str): The URL of the version control system.
         pipeline_run_url (str): The URL of the pipeline run.
         started_by (str): The user who started the deployment.
-        image_tag_aws (str): The AWS image tag.
+        image_tag (str): The image tag.
         git_tag_timestamp (str): The timestamp of the Git tag.
         maven_published (str): The Maven published version.
         remedy_change_id (str): The remedy change ID.
-        aws_url (str): The AWS URL.
+        deployment_target_url (str): The Deployment Target URL.
         artifact_url (str): The URL of the artifact.
         deployment_log_url (str): The URL of the deployment log service.
         dl_username (str): The username for the deployment log service.
@@ -210,14 +213,14 @@ def create_deployment_json(actual_timestamp: str,
     Returns:
         dict: A dictionary representation of the deployment.
     """
-    details: str = "cluster: " + cluster + ", service: " + app_name + ", tag: " + image_tag_aws
-    target = DeploymentTarget("AWS", aws_url, details).to_dict()
+    details: str = "cluster: " + cluster + ", service: " + app_name + ", tag: " + image_tag
+    target = DeploymentTarget(deployment_platform, deployment_target_url, details).to_dict()
 
     # If the tag is not an annotated git tag that includes a timestamp, fall back to the commit timestamp
     git_tag_timestamp = git_commit_timestamp if not git_tag_timestamp else git_tag_timestamp
     print("### git_tag_timestamp: ", git_tag_timestamp)
 
-    component_version = ComponentVersion(image_tag_aws, git_tag_timestamp, version_control_url, git_commit,
+    component_version = ComponentVersion(image_tag, git_tag_timestamp, version_control_url, git_commit,
                                          git_commit_timestamp, maven_published, app_name, system_name).to_dict()
 
     print("### component_version: ", component_version)
@@ -229,7 +232,7 @@ def create_deployment_json(actual_timestamp: str,
     link_commit = Link("Commit", version_control_url)
     links = {link_pipeline_run_url, link_commit}
 
-    changelog = create_change_log(actual_version=image_tag_aws,
+    changelog = create_change_log(actual_version=image_tag,
                                   actual_git_commit=git_commit,
                                   system_name=system_name,
                                   app_name=app_name,
