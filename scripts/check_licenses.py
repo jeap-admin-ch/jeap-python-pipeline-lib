@@ -13,14 +13,16 @@ def check_licenses():
 
     # List of packages to ignore
     # Jeepney is licensed under MIT (https://pypi.org/project/jeepney/), but cannot be seen by pip-licenses
-    ignored_packages = ["Jeepney"]
+    # typing_extensions is licensed under PSFL (https://pypi.org/project/typing-extensions/)
+    # urllib3 is licensed under MIT (https://pypi.org/project/urllib3/)
+    ignored_packages = ["Jeepney", "typing_extensions", "urllib3"]
 
     # Run pip-licenses and save the output to a JSON file
     command = ["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"]
 
     if ignored_packages:
         command.append("--ignore-packages")
-    command.append(",".join(ignored_packages))
+        command.extend(ignored_packages)
 
     subprocess.run(command, check=True)
 
