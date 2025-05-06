@@ -50,7 +50,8 @@ def put_to_deployment_log_service(url: str,
                                   deployment_id: str,
                                   deployment_log_json: dict,
                                   username: str,
-                                  password: str):
+                                  password: str,
+                                  ready_for_deploy_check: bool = False):
     """
     Update the deployment log service with new deployment data.
 
@@ -60,11 +61,12 @@ def put_to_deployment_log_service(url: str,
         deployment_log_json (dict): The JSON data to update the deployment log with.
         username (str): The username for authentication.
         password (str): The password for authentication.
+        ready_for_deploy_check (bool): readyForDeployCheck flag for the deployment log. Optional. Default: False
 
     Returns:
         Response: The response from the deployment log service.
     """
-    api_url = f"{url}/api/deployment/{deployment_id}?readyForDeployCheck=false"
+    api_url = f"{url}/api/deployment/{deployment_id}?readyForDeployCheck={str(ready_for_deploy_check).lower()}"
     print(f"### put_to_deployment_log_service: {api_url}")
     return __request_deployment_log_service(api_url, "PUT", deployment_log_json, username, password)
 

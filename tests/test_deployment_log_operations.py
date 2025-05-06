@@ -20,19 +20,27 @@ class TestDeploymentLogOperations(unittest.TestCase):
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
     def test_put_deployment_state_success(self, mock_request):
         mock_request.return_value.status_code = 200
-        response = put_deployment_state("http://example.com", "123", "DEPLOYED", "user", "pass")
+        response = put_deployment_state("https://example.com", "123", "DEPLOYED", "user", "pass")
         self.assertEqual(response.status_code, 200)
 
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
     def test_put_deployment_state_with_message(self, mock_request):
         mock_request.return_value.status_code = 200
-        response = put_deployment_state("http://example.com", "123", "DEPLOYED", "user", "pass", message="Deployment successful")
+        response = put_deployment_state("https://example.com", "123", "DEPLOYED", "user", "pass", message="Deployment successful")
         self.assertEqual(response.status_code, 200)
 
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
     def test_put_to_deployment_log_service_success(self, mock_request):
         mock_request.return_value.status_code = 200
-        response = put_to_deployment_log_service("http://example.com", "123", {"key": "value"}, "user", "pass")
+        response = put_to_deployment_log_service("https://example.com", "123", {"key": "value"}, "user", "pass")
+        mock_request.assert_called_with('https://example.com/api/deployment/123?readyForDeployCheck=false', 'PUT', {'key': 'value'}, 'user', 'pass')
+        self.assertEqual(response.status_code, 200)
+
+    @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
+    def test_put_to_deployment_log_service_ready_for_deploy(self, mock_request):
+        mock_request.return_value.status_code = 200
+        response = put_to_deployment_log_service("https://example.com", "123", {"key": "value"}, "user", "pass", True)
+        mock_request.assert_called_with('https://example.com/api/deployment/123?readyForDeployCheck=true', 'PUT', {'key': 'value'}, 'user', 'pass')
         self.assertEqual(response.status_code, 200)
 
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
@@ -41,7 +49,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         mock_response.status_code = 200
         mock_response.text = json.dumps({"deployment": "data"})
         mock_request.return_value = mock_response
-        response = get_previous_deployment_on_environment("http://example.com", "system", "component", "env", "1.0", "user", "pass")
+        response = get_previous_deployment_on_environment("https://example.com", "system", "component", "env", "1.0", "user", "pass")
         self.assertIsNotNone(response)
         self.assertEqual(response["deployment"], "data")
 
@@ -50,19 +58,19 @@ class TestDeploymentLogOperations(unittest.TestCase):
         mock_response = Mock()
         mock_response.status_code = 404
         mock_request.return_value = mock_response
-        response = get_previous_deployment_on_environment("http://example.com", "system", "component", "env", "1.0", "user", "pass")
+        response = get_previous_deployment_on_environment("https://example.com", "system", "component", "env", "1.0", "user", "pass")
         self.assertIsNone(response)
 
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
     def put_artifacts_version_success(self, mock_request):
         mock_request.return_value.status_code = 200
-        response = put_artifacts_version("http://example.com", "coordinates", "http://build.url", "user", "pass")
+        response = put_artifacts_version("https://example.com", "coordinates", "https://build.url", "user", "pass")
         self.assertEqual(response.status_code, 200)
 
     @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
     def put_artifacts_version_failure(self, mock_request):
         mock_request.return_value.status_code = 500
-        response = put_artifacts_version("http://example.com", "coordinates", "http://build.url", "user", "pass")
+        response = put_artifacts_version("https://example.com", "coordinates", "https://build.url", "user", "pass")
         self.assertEqual(response.status_code, 500)
 
     def test_actual_timestamp_format(self):
@@ -98,16 +106,16 @@ class TestDeploymentLogOperations(unittest.TestCase):
         deploy_stage = "test-stage"
         git_commit = "test_commit_sha"
         git_commit_timestamp = "2023-10-01T11:00:00.000Z"
-        version_control_url = "http://example.com/vcs"
-        pipeline_run_url = "http://example.com/pipeline"
+        version_control_url = "https://example.com/vcs"
+        pipeline_run_url = "https://example.com/pipeline"
         started_by = "test-user"
         image_tag_aws = "test-image-tag"
         git_tag_timestamp = "2023-10-01T10:00:00.000Z"
         maven_published = "1.0.0"
         remedy_change_id = "test-remedy-id"
-        aws_url = "http://example.com/aws"
-        artifact_url = "http://example.com/artifact"
-        deployment_log_url = "http://example.com/deployment-log"
+        aws_url = "https://example.com/aws"
+        artifact_url = "https://example.com/artifact"
+        deployment_log_url = "https://example.com/deployment-log"
         dl_username = "user"
         dl_password = "pass"
 
@@ -143,7 +151,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         system_name = "test-system"
         app_name = "test-app"
         deploy_stage = "test-stage"
-        deployment_log_url = "http://example.com/deployment-log"
+        deployment_log_url = "https://example.com/deployment-log"
         username = "user"
         password = "pass"
 
