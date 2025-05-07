@@ -8,8 +8,8 @@
 | build              | 1.2.2.post1 | MIT License                                                                                      |
 | certifi            | 2025.4.26   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
 | cffi               | 1.17.1      | MIT License                                                                                      |
-| charset-normalizer | 3.4.1       | MIT License                                                                                      |
-| cryptography       | 44.0.2      | Apache Software License; BSD License                                                             |
+| charset-normalizer | 3.4.2       | MIT License                                                                                      |
+| cryptography       | 44.0.3      | Apache Software License; BSD License                                                             |
 | docutils           | 0.21.2      | BSD License; GNU General Public License (GPL); Public Domain; Python Software Foundation License |
 | exceptiongroup     | 1.2.2       | MIT License                                                                                      |
 | id                 | 1.5.0       | Apache Software License                                                                          |
