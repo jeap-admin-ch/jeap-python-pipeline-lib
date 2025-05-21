@@ -1,7 +1,8 @@
-# jeap-python-pipeline-lib
+# jEAP CI/CD Python Library Documentation
 
-Welcome to the project documentation.
-This is a collection of Python modules and libraries for CI/CD pipelines with jEAP context.
+Welcome to the jEAP CI/CD Python library.  
+This project provides a collection of reusable Python modules designed to support and standardize CI/CD pipeline operations in the **jEAP** context.
+
 For more details about the library, please refer to the [modules documentation](docs/index.md).
 
 ## Local Development
