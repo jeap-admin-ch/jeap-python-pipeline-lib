@@ -8,7 +8,8 @@ def check_licenses():
         "Apache-2.0", "MIT", "MIT License", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib",
         "Apache Software License", "Python Software Foundation License",
         "Historical Permission Notice and Disclaimer (HPND)", "Mozilla Public License 2.0 (MPL 2.0)",
-        "ISC License (ISCL)", "Public Domain", "BSD License", "GNU Library or Lesser General Public License (LGPL)"
+        "ISC License (ISCL)", "Public Domain", "BSD License", "GNU Library or Lesser General Public License (LGPL)",
+        "Apache-2.0 OR BSD-3-Clause"
     ]
 
     # List of packages to ignore
