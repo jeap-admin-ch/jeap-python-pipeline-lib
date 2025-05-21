@@ -9,9 +9,9 @@
 | certifi            | 2025.4.26   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
 | cffi               | 1.17.1      | MIT License                                                                                      |
 | charset-normalizer | 3.4.2       | MIT License                                                                                      |
-| cryptography       | 44.0.3      | Apache Software License; BSD License                                                             |
+| cryptography       | 45.0.2      | Apache-2.0 OR BSD-3-Clause                                                                       |
 | docutils           | 0.21.2      | BSD License; GNU General Public License (GPL); Public Domain; Python Software Foundation License |
-| exceptiongroup     | 1.2.2       | MIT License                                                                                      |
+| exceptiongroup     | 1.3.0       | MIT License                                                                                      |
 | id                 | 1.5.0       | Apache Software License                                                                          |
 | idna               | 3.10        | BSD License                                                                                      |
 | importlib_metadata | 8.7.0       | Apache Software License                                                                          |
@@ -27,7 +27,7 @@
 | more-itertools     | 10.7.0      | MIT License                                                                                      |
 | nh3                | 0.2.21      | MIT                                                                                              |
 | packaging          | 25.0        | Apache Software License; BSD License                                                             |
-| pluggy             | 1.5.0       | MIT License                                                                                      |
+| pluggy             | 1.6.0       | MIT License                                                                                      |
 | pycparser          | 2.22        | BSD License                                                                                      |
 | pyproject_hooks    | 1.2.0       | MIT License                                                                                      |
 | pytest             | 8.3.5       | MIT License                                                                                      |
