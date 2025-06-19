@@ -16,7 +16,8 @@ def check_licenses():
     # Jeepney is licensed under MIT (https://pypi.org/project/jeepney/), but cannot be seen by pip-licenses
     # typing_extensions is licensed under PSFL (https://pypi.org/project/typing-extensions/)
     # urllib3 is licensed under MIT (https://pypi.org/project/urllib3/)
-    ignored_packages = ["Jeepney", "typing_extensions", "urllib3"]
+    # zipp is licensed under MIT (https://pypi.org/project/zipp/)
+    ignored_packages = ["Jeepney", "typing_extensions", "urllib3", "zipp"]
 
     # Run pip-licenses and save the output to a JSON file
     command = ["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"]
