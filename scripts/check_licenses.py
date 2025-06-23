@@ -17,7 +17,8 @@ def check_licenses():
     # typing_extensions is licensed under PSFL (https://pypi.org/project/typing-extensions/)
     # urllib3 is licensed under MIT (https://pypi.org/project/urllib3/)
     # zipp is licensed under MIT (https://pypi.org/project/zipp/)
-    ignored_packages = ["Jeepney", "typing_extensions", "urllib3", "zipp"]
+    # jaraco.functools is licensed under MIT (https://pypi.org/project/jaraco.functools/)
+    ignored_packages = ["Jeepney", "typing_extensions", "urllib3", "zipp", "jaraco.functools"]
 
     # Run pip-licenses and save the output to a JSON file
     command = ["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"]
