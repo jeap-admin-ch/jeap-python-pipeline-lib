@@ -238,7 +238,8 @@ class Deployment:
                  deployment_unit: DeploymentUnit,
                  changelog: ChangeLog,
                  remedy_change_id: str,
-                 properties: dict):
+                 properties: dict,
+                 deployment_types: set[str]):
         self.started_at: str = started_at
         self.started_by: str = started_by
         self.environment_name: str = environment_name
@@ -249,6 +250,7 @@ class Deployment:
         self.changelog: ChangeLog = changelog
         self.remedy_change_id: str = remedy_change_id
         self.properties: dict = properties
+        self.deployment_types = deployment_types
 
     def to_dict(self):
         deployment_dict = to_json({
@@ -260,7 +262,8 @@ class Deployment:
             "componentVersion": self.component_version,
             "deploymentUnit": self.deployment_unit,
             "changelog": self.changelog,
-            "properties" : self.properties
+            "properties" : self.properties,
+            "deploymentTypes": self.deployment_types
         })
         if self.remedy_change_id:
             deployment_dict["remedyChangeId"] = self.remedy_change_id

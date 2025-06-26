@@ -253,7 +253,8 @@ def create_deployment_json(deployment_platform: str,
                                    deployment_unit=unit,
                                    changelog=changelog,
                                    remedy_change_id=remedy_change_id,
-                                   properties=None)
+                                   properties=None,
+                                   deployment_types={"CODE"})
     return deployment_create.to_dict()
 
 def create_change_log(actual_version: str,

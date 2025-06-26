@@ -60,7 +60,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         unit = DeploymentUnit.docker_image("https://repo.com/image")
         changelog = ChangeLog("v1.0", "v0.9", ["JIRA-123"])
         link = Link("example", "http://example.com")
-        deployment = Deployment("2023-01-01T00:00:00Z", "user1", "env1", target, [link], version, unit, changelog, "RC-123", {"key": "value"})
+        deployment = Deployment("2023-01-01T00:00:00Z", "user1", "env1", target, [link], version, unit, changelog, "RC-123", {"key": "value"}, {"CODE"})
         expected_dict = {
             "startedAt": "2023-01-01T00:00:00Z",
             "startedBy": "user1",
@@ -71,7 +71,8 @@ class TestDeploymentLogOperations(unittest.TestCase):
             "deploymentUnit": unit.to_dict(),
             "changelog": changelog.to_dict(),
             "remedyChangeId": "RC-123",
-            "properties": {"key": "value"}
+            "properties": {"key": "value"},
+            "deploymentTypes": ["CODE"]
         }
         self.assertEqual(deployment.to_dict(), expected_dict)
 
