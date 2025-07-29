@@ -3,13 +3,13 @@
 | Pygments           | 2.19.2      | BSD License                                                                                      |
 | SecretStorage      | 3.3.3       | BSD License                                                                                      |
 | backports.tarfile  | 1.2.0       | MIT License                                                                                      |
-| boto3              | 1.36.26     | Apache Software License                                                                          |
-| botocore           | 1.36.26     | Apache Software License                                                                          |
+| boto3              | 1.39.15     | Apache Software License                                                                          |
+| botocore           | 1.39.15     | Apache Software License                                                                          |
 | build              | 1.2.2.post1 | MIT License                                                                                      |
-| certifi            | 2025.6.15   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
+| certifi            | 2025.7.14   | Mozilla Public License 2.0 (MPL 2.0)                                                             |
 | cffi               | 1.17.1      | MIT License                                                                                      |
 | charset-normalizer | 3.4.2       | MIT License                                                                                      |
-| cryptography       | 45.0.4      | Apache-2.0 OR BSD-3-Clause                                                                       |
+| cryptography       | 45.0.5      | Apache-2.0 OR BSD-3-Clause                                                                       |
 | docutils           | 0.21.2      | BSD License; GNU General Public License (GPL); Public Domain; Python Software Foundation License |
 | exceptiongroup     | 1.3.0       | MIT License                                                                                      |
 | id                 | 1.5.0       | Apache Software License                                                                          |
@@ -25,7 +25,7 @@
 | markdown-it-py     | 3.0.0       | MIT License                                                                                      |
 | mdurl              | 0.1.2       | MIT License                                                                                      |
 | more-itertools     | 10.7.0      | MIT License                                                                                      |
-| nh3                | 0.2.21      | MIT                                                                                              |
+| nh3                | 0.3.0       | MIT                                                                                              |
 | packaging          | 25.0        | Apache Software License; BSD License                                                             |
 | pluggy             | 1.6.0       | MIT License                                                                                      |
 | pycparser          | 2.22        | BSD License                                                                                      |
@@ -36,10 +36,10 @@
 | requests           | 2.32.4      | Apache Software License                                                                          |
 | requests-toolbelt  | 1.0.0       | Apache Software License                                                                          |
 | rfc3986            | 2.0.0       | Apache Software License                                                                          |
-| rich               | 14.0.0      | MIT License                                                                                      |
-| s3transfer         | 0.11.3      | Apache Software License                                                                          |
+| rich               | 14.1.0      | MIT License                                                                                      |
+| s3transfer         | 0.13.1      | Apache Software License                                                                          |
 | six                | 1.17.0      | MIT License                                                                                      |
 | twine              | 6.1.0       | Apache Software License                                                                          |
-| typing_extensions  | 4.14.0      | UNKNOWN                                                                                          |
+| typing_extensions  | 4.14.1      | UNKNOWN                                                                                          |
 | urllib3            | 2.5.0       | UNKNOWN                                                                                          |
 | zipp               | 3.23.0      | UNKNOWN                                                                                          |

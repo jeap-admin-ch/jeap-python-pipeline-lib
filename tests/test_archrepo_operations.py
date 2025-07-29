@@ -11,7 +11,6 @@ class TestArchRepoOperations(unittest.TestCase):
         mock_request.return_value.status_code = 200
         response = post_openapi_spec_to_archrepo_service(
             "https://example.com",
-            "my-system",
             "my-component",
             "the-version",
             {"key": "value"},
@@ -20,7 +19,7 @@ class TestArchRepoOperations(unittest.TestCase):
         )
         mock_request.assert_called_with(
             'POST',
-            'https://example.com/api/openapi/my-system/my-component?version=the-version',
+            'https://example.com/api/openapi/my-component?version=the-version',
             files={'file': ('openapi.json', '{"key": "value"}', 'application/json')},
             auth=HTTPBasicAuth('user', 'pass')
         )
