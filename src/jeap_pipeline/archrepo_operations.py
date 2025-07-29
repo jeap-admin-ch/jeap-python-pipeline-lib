@@ -3,7 +3,6 @@ from requests.auth import HTTPBasicAuth
 import json
 
 def post_openapi_spec_to_archrepo_service(url: str,
-                                          system_name: str,
                                           component_name: str,
                                           version: str,
                                           open_api_spec_json: dict,
@@ -14,7 +13,6 @@ def post_openapi_spec_to_archrepo_service(url: str,
 
     Args:
         url (str): The base URL of the ArchRepo service.
-        system_name (str): The system name of the component.
         component_name (str): The component name of the component.
         version (str): The version of the OpenAPI spec.
         open_api_spec_json (dict): The JSON data containing the OpenAPI spec.
@@ -24,7 +22,7 @@ def post_openapi_spec_to_archrepo_service(url: str,
     Returns:
         Response: The response from the ArchRepo service.
     """
-    api_url = f"{url}/api/openapi/{system_name}/{component_name}?version={version}"
+    api_url = f"{url}/api/openapi/{component_name}?version={version}"
     print(f"Upload OpenAPI Spec with url: {api_url}")
 
     # Pack the json data in multipart files

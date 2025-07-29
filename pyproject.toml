@@ -4,12 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeap_pipeline"
-version = "0.10.0"
+version = "0.10.1"
 authors = [
     { name="Laris Jacobs", email="laris.jacobs@bit.admin.ch" },
     { name="Jose Alvarez Morales", email="jose.alvarezmorales@bit.admin.ch"},
     { name="Oliver Santschi", email="oliver.santschi@bit.admin.ch"},
-    { name="Fabien Cerf", email="fabien.cerf@bit.admin.ch"}
+    { name="Fabien Cerf", email="fabien.cerf@bit.admin.ch"},
+    { name="Matthias Fritschi", email="matthias.fritschi@bit.admin.ch"}
 ]
 description = "A collection of Python modules and libraries for CI/CD pipelines in the jEAP context."
 readme = "README.md"
