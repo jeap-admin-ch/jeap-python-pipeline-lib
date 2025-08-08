@@ -9,7 +9,7 @@
 | certifi            | 2025.8.3    | Mozilla Public License 2.0 (MPL 2.0)                         |
 | cffi               | 1.17.1      | MIT License                                                  |
 | charset-normalizer | 3.4.2       | MIT License                                                  |
-| cryptography       | 45.0.5      | Apache-2.0 OR BSD-3-Clause                                   |
+| cryptography       | 45.0.6      | Apache-2.0 OR BSD-3-Clause                                   |
 | docutils           | 0.22        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.0       | MIT License                                                  |
 | id                 | 1.5.0       | Apache Software License                                      |
