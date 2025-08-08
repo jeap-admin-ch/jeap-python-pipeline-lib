@@ -1,0 +1,38 @@
+publiccodeYmlVersion: 0.4.0
+name: jeap-python-pipeline-lib
+softwareVersion: 0.10.0
+releaseDate: 2025-06-26
+applicationSuite: jEAP
+url: "https://github.com/jeap-admin-ch/jeap-python-pipeline-lib.git"
+landingURL: "https://github.com/jeap-admin-ch/jeap"
+platforms:
+  - web
+categories:
+  - application-development
+developmentStatus: stable
+softwareType: library
+description:
+  en:
+    localisedName: jeap-python-pipeline-lib
+    shortDescription: This project provides a collection of reusable Python modules designed to support and standardize CI/CD pipeline operations in the jEAP context
+    longDescription: >
+      The `jeap-python-pipeline-lib` is a Python library that provides reusable modules to facilitate the development
+      and management of CI/CD pipelines within the jEAP ecosystem. It aims to standardize operations, enhance efficiency,
+      and ensure consistency across various pipeline implementations. As jEAP support multiple CI/CD platforms such
+      as Tekton and GitHubActions, the re-use of common scripts and modules is essential to maintain a coherent
+      pipeline experience and to reduce duplication of effort across different projects.
+    features:
+      - Integration of CI/CD pipelines with the jEAP ecosystem (architecture repository service, message contracts, deployment log, test orchestrator)
+      - Integration with Pact Broker, Remedy
+      - Support for GitOps deployments and automated staging
+legal:
+  license: Apache-2.0
+maintenance:
+  type: internal
+  contacts:
+    - name: Federal Office of Information Technology, Systems and Telecommunication FOITT
+      email: jeap-community@bit.admin.ch
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - en
