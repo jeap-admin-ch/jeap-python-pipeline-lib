@@ -1,10 +1,18 @@
+import abc
 import os
 import requests
 import json
 from typing import Optional, List
 
 
-def send_dispatch_event(organization: str, repository_name: str, stage: str, version: str, services: List[str]) -> None:
+def send_dispatch_event(
+        organization: str,
+        repository_name: str,
+        stage: str,
+        version: str,
+        services: List[str],
+        event_type: str = "new-version-published"
+) -> None:
     """
     Sends a GitHub Repository Dispatch Event to trigger workflows.
 
@@ -17,6 +25,7 @@ def send_dispatch_event(organization: str, repository_name: str, stage: str, ver
         stage (str): The deployment stage (e.g., dev, staging, prod).
         version (str): The version of the deployment.
         services List[str]: A comma-separated list of services.
+        event_type (str): The type of event to trigger (default: "new-version-published").
 
     Returns:
         None
@@ -29,13 +38,17 @@ def send_dispatch_event(organization: str, repository_name: str, stage: str, ver
     if not github_token:
         raise EnvironmentError("GITHUB_TOKEN environment variable is not set")
 
+    client_payload = {
+        "stage": stage,
+        "services": services
+    }
+
+    if event_type == "new-version-published":
+        client_payload["version"] = version
+
     payload = {
-        "event_type": "new-version-published",
-        "client_payload": {
-            "stage": stage,
-            "services": services,
-            "version": version
-        }
+        "event_type": event_type,
+        "client_payload": client_payload
     }
 
     repository_dispatch_url = f"https://api.github.com/repos/{organization}/{repository_name}/dispatches"

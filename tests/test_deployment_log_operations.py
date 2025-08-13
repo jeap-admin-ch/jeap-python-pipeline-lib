@@ -12,7 +12,9 @@ from src.jeap_pipeline import (put_deployment_state,
                                create_deployment_json,
                                create_change_log,
                                get_commit_details,
-                               get_tagged_at)
+                               get_tagged_at,
+                               put_undeployment_state,
+                               create_undeployment_json)
 
 
 
@@ -185,3 +187,52 @@ class TestDeploymentLogOperations(unittest.TestCase):
         tag_timestamp = get_tagged_at(version_name)
 
         self.assertEqual(tag_timestamp, "2023-10-01T12:00:00Z")
+
+
+    @patch('src.jeap_pipeline.deployment_log_operations.__request_deployment_log_service')
+    def test_put_undeployment_state_success(self, mock_request):
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_request.return_value = mock_response
+
+        response = put_undeployment_state(
+            url="https://example.com",
+            deployment_id="undeploy-123",
+            request_json={"status": "STARTED"},
+            username="user",
+            password="pass"
+        )
+
+        mock_request.assert_called_with(
+            "https://example.com/api/system/undeploy-123/undeploy",
+            "PUT",
+            {"status": "STARTED"},
+            "user",
+            "pass"
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_undeployment_json_structure(self):
+        started_at = "2025-08-13T12:00:00Z"
+        started_by = "tester"
+        system_name = "TestSystem"
+        component_name = "TestComponent"
+        environment_name = "dev"
+        remedy_change_id = "CHG123456"
+
+        undeployment_json = create_undeployment_json(
+            started_at,
+            started_by,
+            system_name,
+            component_name,
+            environment_name,
+            remedy_change_id
+        )
+
+        self.assertIsInstance(undeployment_json, dict)
+        self.assertEqual(undeployment_json["startedAt"], started_at)
+        self.assertEqual(undeployment_json["startedBy"], started_by)
+        self.assertEqual(undeployment_json["systemName"], system_name)
+        self.assertEqual(undeployment_json["componentName"], component_name)
+        self.assertEqual(undeployment_json["environmentName"], environment_name)
+        self.assertEqual(undeployment_json["remedyChangeId"], remedy_change_id)

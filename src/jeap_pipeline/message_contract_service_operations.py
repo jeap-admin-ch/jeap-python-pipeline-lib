@@ -39,3 +39,18 @@ def record_deployment(mcs_url: str, user: str, password: str, app_name: str, app
     print(f"Response status: {response.status_code}")
     print(f"Response body: {response.text}")
     response.raise_for_status()
+
+def delete_deployments(mcs_url: str, user: str, password: str, app_name: str, environment: str):
+    mcs_delete_deployment_url = f"{mcs_url}/api/deployments/{app_name}/{environment}"
+
+    headers = {
+        "Accept": "application/json"
+    }
+
+    print("Delete deployment from Message Contract Service:")
+    print(f"Request URL: {mcs_delete_deployment_url}")
+
+    response = requests.delete(mcs_delete_deployment_url, headers=headers, auth=HTTPBasicAuth(user, password))
+    print(f"Response status: {response.status_code}")
+    print(f"Response body: {response.text}")
+    response.raise_for_status()

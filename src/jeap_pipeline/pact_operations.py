@@ -90,3 +90,43 @@ def record_deployment(pact_pacticipant_name: str,
         error_message = f"Cannot record deployment of {pact_pacticipant_name} version {pacticipant_version} to {current_stage}: {result.stderr}"
         print(error_message)
         raise RuntimeError(error_message)
+
+
+def record_undeployment(pact_pacticipant_name: str,
+                        current_stage: str) -> None:
+    """
+    Record the undeployment of a Pact participant from a specified environment.
+
+    This function runs the `pact-broker record-undeployment` command to record the removal of a specified version of
+    a Pact participant from a given environment.
+    Make sure to have the `pact-cli` installed and available in the PATH.
+    Make sure that the PACT_BROKER_BASE_URL environment variable is set.
+
+    Args:
+        pact_pacticipant_name (str): The name of the Pact participant.
+        current_stage (str): The environment from which the undeployment is being recorded.
+
+    Raises:
+        RuntimeError: If the recording fails.
+
+    Returns:
+        None
+    """
+    command = [
+        "pact-broker",
+        "record-undeployment",
+        "--pacticipant", pact_pacticipant_name,
+        "--environment", current_stage
+    ]
+
+    print(f"Running pact-cli command: {' '.join(command)}")
+    result = subprocess.run(command, capture_output=True, text=True)
+    print("Command output:")
+    print(result.stdout)
+
+    if result.returncode == 0:
+        print(f"Undeployment for {pact_pacticipant_name} from {current_stage} is recorded")
+    else:
+        error_message = f"Cannot record undeployment of {pact_pacticipant_name} from {current_stage}: {result.stderr}"
+        print(error_message)
+        raise RuntimeError(error_message)

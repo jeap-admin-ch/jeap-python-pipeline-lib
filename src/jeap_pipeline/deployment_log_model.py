@@ -270,6 +270,25 @@ class Deployment:
         return deployment_dict
 
 
+class Undeployment:
+    def __init__(self, started_at, started_by, system_name, component_name, environment_name, remedy_change_id):
+        self.started_at = started_at
+        self.started_by = started_by
+        self.system_name = system_name
+        self.component_name = component_name
+        self.environment_name = environment_name
+        self.remedy_change_id = remedy_change_id
+
+    def to_dict(self):
+        return to_json({
+            "startedAt": self.started_at,
+            "startedBy": self.started_by,
+            "systemName": self.system_name,
+            "componentName": self.component_name,
+            "environmentName": self.environment_name,
+            "remedyChangeId": self.remedy_change_id
+        })
+
 
 def to_json(dictionary):
     """
