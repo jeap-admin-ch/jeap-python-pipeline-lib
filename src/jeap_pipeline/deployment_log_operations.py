@@ -7,8 +7,30 @@ from datetime import datetime
 from requests import request, Response
 from requests.auth import HTTPBasicAuth
 
-from .deployment_log_model import ChangeLog, DeploymentTarget, ComponentVersion, DeploymentUnit, Link, Deployment
+from .deployment_log_model import ChangeLog, DeploymentTarget, ComponentVersion, DeploymentUnit, Link, Deployment, Undeployment
 
+
+def put_undeployment_state(url: str,
+                         deployment_id: str,
+                         request_json: dict,
+                         username: str,
+                         password: str):
+    """
+    Put a state of an undeployment.
+
+    Args:
+        url (str): The base URL of the deployment service.
+        deployment_id (str): The ID of the deployment to update.
+        request_json (dict): The new state of the undeployment as JSON.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+
+    Returns:
+        Response: The response from the deployment log service.
+    """
+    api_url = f"{url}/api/system/{deployment_id}/undeploy"
+
+    return __request_deployment_log_service(api_url, "PUT", request_json, username, password)
 
 def put_deployment_state(url: str,
                          deployment_id: str,
@@ -377,3 +399,30 @@ def __request_deployment_log_service(url: str,
             response.raise_for_status()
     return response
 
+def create_undeployment_json(started_at: str,
+                             started_by: str,
+                             system_name: str,
+                             component_name: str,
+                             environment_name: str,
+                             remedy_change_id: str):
+    """
+    Create a JSON representation of an undeployment.
+
+    Args:
+        started_at (str): The timestamp when the undeployment started.
+        started_by (str): The user who started the undeployment.
+        system_name (str): The name of the system.
+        component_name (str): The name of the component being undeployed.
+        environment_name (str): The environment from which the component is being undeployed.
+        remedy_change_id (str): The remedy change ID associated with the undeployment.
+
+    Returns:
+        dict: A dictionary representation of the undeployment.
+    """
+    undeployment = Undeployment(started_at=started_at,
+                                started_by=started_by,
+                                system_name=system_name,
+                                component_name=component_name,
+                                environment_name=environment_name,
+                                remedy_change_id=remedy_change_id)
+    return undeployment.to_dict()
