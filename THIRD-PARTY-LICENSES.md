@@ -8,7 +8,7 @@
 | build              | 1.2.2.post1 | MIT License                                                  |
 | certifi            | 2025.8.3    | Mozilla Public License 2.0 (MPL 2.0)                         |
 | cffi               | 1.17.1      | MIT License                                                  |
-| charset-normalizer | 3.4.2       | MIT License                                                  |
+| charset-normalizer | 3.4.3       | MIT                                                          |
 | cryptography       | 45.0.6      | Apache-2.0 OR BSD-3-Clause                                   |
 | docutils           | 0.22        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.0       | MIT License                                                  |
@@ -22,7 +22,7 @@
 | jeepney            | 0.9.0       | UNKNOWN                                                      |
 | jmespath           | 1.0.1       | MIT License                                                  |
 | keyring            | 25.6.0      | MIT License                                                  |
-| markdown-it-py     | 3.0.0       | MIT License                                                  |
+| markdown-it-py     | 4.0.0       | MIT License                                                  |
 | mdurl              | 0.1.2       | MIT License                                                  |
 | more-itertools     | 10.7.0      | MIT License                                                  |
 | nh3                | 0.3.0       | MIT                                                          |
