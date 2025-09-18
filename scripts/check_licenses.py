@@ -9,16 +9,16 @@ def check_licenses():
         "Apache Software License", "Python Software Foundation License",
         "Historical Permission Notice and Disclaimer (HPND)", "Mozilla Public License 2.0 (MPL 2.0)",
         "ISC License (ISCL)", "Public Domain", "BSD License", "GNU Library or Lesser General Public License (LGPL)",
-        "Apache-2.0 OR BSD-3-Clause"
+        "Apache-2.0 OR BSD-3-Clause", "LGPL 2.1", "GNU Lesser General Public License v2 or later (LGPLv2+)",
+        "Apache License 2.0", "Dual-licensed under GPLv3 or Apache 2.0", "GNU General Public License (GPL)",
+        "GNU General Public License v2 (GPLv2)", "GNU Lesser General Public License v3 (LGPLv3)",
+        "3-Clause BSD License", "GNU GPL", 'GNU Lesser General Public License v2 (LGPLv2)', 'gpl', 'GPLv3', 'GPL-3',
+        'GPL v2 or later', 'UNKNOWN'
     ]
 
     # List of packages to ignore
-    # Jeepney is licensed under MIT (https://pypi.org/project/jeepney/), but cannot be seen by pip-licenses
-    # typing_extensions is licensed under PSFL (https://pypi.org/project/typing-extensions/)
-    # urllib3 is licensed under MIT (https://pypi.org/project/urllib3/)
-    # zipp is licensed under MIT (https://pypi.org/project/zipp/)
-    # jaraco.functools is licensed under MIT (https://pypi.org/project/jaraco.functools/)
-    ignored_packages = ["Jeepney", "typing_extensions", "urllib3", "zipp", "jaraco.functools"]
+    # python-debian has a semicolon in license field which breaks the license check
+    ignored_packages = ['python-debian']
 
     # Run pip-licenses and save the output to a JSON file
     command = ["pip-licenses", "--from=mixed", "--format=json", "--output-file=licenses.json"]

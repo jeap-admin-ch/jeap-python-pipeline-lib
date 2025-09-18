@@ -11,6 +11,5 @@ from .deployment_log_operations import put_deployment_state, put_to_deployment_l
     get_actual_timestamp, generate_deployment_id, get_commit_details, get_tagged_at, create_change_log, \
     put_undeployment_state, create_undeployment_json
 from .deployment_log_model import DeploymentTarget, ComponentVersion, DeploymentUnit, Link, Deployment, ChangeLog
-from .archrepo_operations import post_openapi_spec_to_archrepo_service
 from .remedy_operations import create_change_request_in_remedy, get_change_request_id_from_response
 from .test_orchestrator import start_test_case, wait_until_test_case_ends, start_multiple_test_cases, NO_RESULT, PASS
