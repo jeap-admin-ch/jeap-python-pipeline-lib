@@ -4,7 +4,6 @@ The library currently includes the following modules:
 
 | Module Name                           | Description                                                       |
 |---------------------------------------|-------------------------------------------------------------------|
-| `archrepo_operations`                 | Interface to the ArchRepo service for uploading OpenAPI specs     |
 | `automated_staging`                   | Utilities to support automated staging processes                  |
 | `deployment_log_operations`           | Interface to the Deployment-Log service for recording deployments |
 | `ecs_deployment_checker`              | Helper methods for checking the status of ECS deployments         |
