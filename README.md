@@ -26,7 +26,7 @@ For more details about the library, please refer to the [modules documentation](
     pip install -r requirements.txt
     ```
 
-4. Or to install just the tools use:
+4. Install the needed tools:
     ```bash
     pip install build twine pip-licenses pytest
     ```
@@ -106,7 +106,7 @@ python3 -m pip install -i https://test.pypi.org/simple/ jeap-pipeline==0.1.0
 
 To check the licenses of the dependencies and generate the THIRD-PARTY-LICENSES.md file, run the following command:
 ```bash
-python3 scripts/check_licenses.py
+python3 scripts/check_licenses.py --target-python .venv/bin/python
 ```
 
 ## Publishing

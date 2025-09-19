@@ -35,9 +35,9 @@ jobs:
         run: |
           VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f2)
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-          VERSION=$VERSION
+            VERSION=$VERSION
           else
-          VERSION=${VERSION}.dev$(date +%s)
+            VERSION=${VERSION}.dev$(date +%s)
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -45,21 +45,28 @@ jobs:
         run: |
           sed -i "s/^version = \".*\"/version = \"${{ steps.set-version.outputs.version }}\"/" pyproject.toml
 
-      - name: Install dependencies
+      - name: Create venv and install dependencies
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+
+      - name: Install pip-licenses in system Python
         run: |
           python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python3 -m pip install pip-licenses
 
       - name: Run license check script
         run: |
-          python scripts/check_licenses.py
+          python3 scripts/check_licenses.py --target-python .venv/bin/python
 
       - name: Build package
-        run: python3 -m build
+        run: |
+          .venv/bin/python -m build
 
       - name: Run tests
         run: |
-          python3 -m pytest
+          .venv/bin/python -m pytest
 
       - name: Commit and push generated files
         if: github.ref == 'refs/heads/main'
@@ -79,4 +86,4 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ steps.set-values.outputs.pypi-api-token }}
         run: |
-          python3 -m twine upload --verbose --repository ${{ steps.set-values.outputs.pypi-repository }} dist/*
+          .venv/bin/python -m twine upload --verbose --repository ${{ steps.set-values.outputs.pypi-repository }} dist/*
