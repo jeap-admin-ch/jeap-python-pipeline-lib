@@ -52,6 +52,52 @@ class TestRecordUndeployment(unittest.TestCase):
             text=True
         )
 
+    @patch('src.jeap_pipeline.pact_operations.subprocess.run')
+    def test_record_undeployment_pacticipant_already_undeployed(self, mock_subprocess_run):
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "No pacticipant with name 'test_pacticipant' found."
+        mock_subprocess_run.return_value = mock_result
+
+        pact_operations.record_undeployment(
+            pact_pacticipant_name="test_pacticipant",
+            current_stage="test_env"
+        )
+
+        mock_subprocess_run.assert_called_once_with(
+            [
+                "pact-broker",
+                "record-undeployment",
+                "--pacticipant", "test_pacticipant",
+                "--environment", "test_env"
+            ],
+            capture_output=True,
+            text=True
+        )
+
+    @patch('src.jeap_pipeline.pact_operations.subprocess.run')
+    def test_record_undeployment_already_undeployed(self, mock_subprocess_run):
+        mock_result = MagicMock()
+        mock_result.returncode = 1
+        mock_result.stdout = "test_pacticipant is not currently deployed to test_env environment."
+        mock_subprocess_run.return_value = mock_result
+
+        pact_operations.record_undeployment(
+            pact_pacticipant_name="test_pacticipant",
+            current_stage="test_env"
+        )
+
+        mock_subprocess_run.assert_called_once_with(
+            [
+                "pact-broker",
+                "record-undeployment",
+                "--pacticipant", "test_pacticipant",
+                "--environment", "test_env"
+            ],
+            capture_output=True,
+            text=True
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

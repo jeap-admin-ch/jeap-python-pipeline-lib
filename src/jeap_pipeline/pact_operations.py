@@ -127,6 +127,9 @@ def record_undeployment(pact_pacticipant_name: str,
     if result.returncode == 0:
         print(f"Undeployment for {pact_pacticipant_name} from {current_stage} is recorded")
     else:
-        error_message = f"Cannot record undeployment of {pact_pacticipant_name} from {current_stage}: {result.stderr}"
-        print(error_message)
-        raise RuntimeError(error_message)
+        if f"No pacticipant with name '{pact_pacticipant_name}' found" in result.stdout.strip() or f"{pact_pacticipant_name} is not currently deployed to {current_stage} environment" in result.stdout.strip():
+            print(f"{pact_pacticipant_name} already undeployed from {current_stage}")
+        else:
+            error_message = f"Cannot record undeployment of {pact_pacticipant_name} from {current_stage}: {result.stderr}"
+            print(error_message)
+            raise RuntimeError(error_message)
