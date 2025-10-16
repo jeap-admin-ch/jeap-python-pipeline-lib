@@ -59,7 +59,7 @@ To combine the build with automated testing and the generation of the THIRD-PART
 ```bash
 python3 scripts/full_build.py
 ```
-If you did like to execute single steps, you can use the following commands.
+If you would like to execute single steps, you can use the following commands.
 A more comprehensive documentation can be found here: https://packaging.python.org/en/latest/tutorials/packaging-projects/
 
 Install the build tool via pip. Make sure you have the latest version of PyPA’s build installed:
@@ -113,6 +113,8 @@ python3 scripts/check_licenses.py --target-python .venv/bin/python
 
 ### Versioning
 The version can be set in the pyproject.toml file. The version number has to comply with semantic versioning and the PEP 440 standard.
+Please make sure to also update publiccode.yml and CHANGELOG.md accordingly.
+
 On every push a CI pipeline is triggered, which builds and uploads the artifact to the (test)-pypi repository.
 * On the main branch, the version number remains unchanged and the artifact is published as a stable release to pypi.
 * On feature branches, a valid development release suffix (.dev<timestamp>) is added to the version. The artifact is published to TestPyPI.
@@ -138,6 +140,9 @@ Specifies additional files to include in the distribution package.
 
 * `pyproject.toml`
 Modern configuration file for build systems. Contains metadata and dependencies of the project.
+
+* `publiccode.yml`
+Public code metadata file following the publiccode.yml specification for open source projects.
 
 * `requirements.txt`
 Lists the dependencies for development and testing.

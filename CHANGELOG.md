@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+Note: Please keep [publiccode.yml](publiccode.yml) in sinc with this file.
+
+## [0.14.1] - 2025-10-16
+
+### Fixed
+
+- Correct timezone handling in deployment_log_operations.py
+
 ## [0.14.0] - 2025-10-08
 
 ### Changed
