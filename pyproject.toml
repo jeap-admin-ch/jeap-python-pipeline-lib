@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeap_pipeline"
-version = "0.14.2"
+version = "0.14.3"
 authors = [
     { name="Laris Jacobs", email="laris.jacobs@bit.admin.ch" },
     { name="Jose Alvarez Morales", email="jose.alvarezmorales@bit.admin.ch"},

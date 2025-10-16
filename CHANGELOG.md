@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sinc with this file.
 
+## [0.14.3] - 2025-10-16
+
+### Fixed
+
+- Third party license markdown file is no longer empty
+
 ## [0.14.2] - 2025-10-16
 
 ### Fixed

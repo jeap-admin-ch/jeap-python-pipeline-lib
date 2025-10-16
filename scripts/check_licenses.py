@@ -2,6 +2,17 @@ import json
 import subprocess
 import argparse
 
+def add_args(command: list[str], ignored_packages: list[str], target_python):
+    # Add optional --python argument
+    if target_python:
+        print("Checking licenses using target python {}".format(target_python))
+        command.append(f"--python={target_python}")
+
+    if ignored_packages:
+        command.append("--ignore-packages")
+        command.extend(ignored_packages)
+
+
 def check_licenses(target_python=None):
     # List of licenses compatible with Apache 2.0
     compatible_licenses = [
@@ -31,15 +42,7 @@ def check_licenses(target_python=None):
 
     # Run pip-licenses and save the output to a JSON file
     command = ["pip-licenses", "--partial-match", "--from=mixed", "--format=json", "--output-file=licenses.json"]
-
-    # Add optional --python argument
-    if target_python:
-        print("Checking licenses using target python {}".format(target_python))
-        command.append(f"--python={target_python}")
-
-    if ignored_packages:
-        command.append("--ignore-packages")
-        command.extend(ignored_packages)
+    add_args(command, ignored_packages, target_python)
 
     subprocess.run(command, check=True)
 
@@ -60,10 +63,15 @@ def check_licenses(target_python=None):
     print("All licenses are compatible.")
 
     # Generate the THIRD-PARTY-LICENSES.md file
-    subprocess.run(["pip-licenses", "--from=mixed", "--format=markdown", "--output-file=THIRD-PARTY-LICENSES.md"], check=True)
+    markdown_command = ["pip-licenses", "--from=mixed", "--format=markdown", "--output-file=THIRD-PARTY-LICENSES.md"]
+    add_args(markdown_command, ignored_packages, target_python)
+    subprocess.run(markdown_command, check=True)
+
+    # Dump contents of THIRD-PARTY-LICENSES.md to console
+    with open('THIRD-PARTY-LICENSES.md', 'r') as md_file:
+        print(md_file.read())
 
     print("THIRD-PARTY-LICENSES.md has been successfully created.")
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Check licenses for Python dependencies.")
