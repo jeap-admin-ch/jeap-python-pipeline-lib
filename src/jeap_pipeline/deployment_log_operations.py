@@ -3,7 +3,7 @@ import re
 import subprocess
 from uuid import uuid4
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from requests import request, Response
 from requests.auth import HTTPBasicAuth
 
@@ -165,12 +165,12 @@ def put_artifacts_version(url: str,
 
 def get_actual_timestamp() -> str:
     """
-    Get the current timestamp in ISO 8601 format.
+    Get the current UTC timestamp in ISO 8601 format.
 
     Returns:
-        str: The current timestamp.
+        str: The current UTC timestamp with timezone awareness.
     """
-    actual_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    actual_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     return actual_timestamp
 
 def generate_deployment_id(component_name: str, env: str) -> str:
