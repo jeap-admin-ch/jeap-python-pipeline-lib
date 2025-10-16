@@ -1,6 +1,6 @@
 import json
 import subprocess
-
+import argparse
 
 def check_licenses(target_python=None):
     # List of licenses compatible with Apache 2.0
@@ -25,6 +25,7 @@ def check_licenses(target_python=None):
         'typing_extensions',    # Python Software Foundation License Version 2 – GitHub
         'urllib3',              # MIT License – GitHub LICENSE.txt
         'zipp',                 # MIT License – PyPI und GitHub
+        'idna',                 # BSD 3
         'python-debian'         # GNU General Public License v2 or later – Debian Policy
     ]
 
@@ -33,6 +34,7 @@ def check_licenses(target_python=None):
 
     # Add optional --python argument
     if target_python:
+        print("Checking licenses using target python {}".format(target_python))
         command.append(f"--python={target_python}")
 
     if ignored_packages:
@@ -47,6 +49,7 @@ def check_licenses(target_python=None):
 
     # Check the licenses
     for package in data:
+        print(f"Checking package: {package['Name']} with license: {package['License']}")
         license_text = package['License']
         licenses = [lic.strip() for lic in license_text.split(';')]
 
@@ -63,4 +66,13 @@ def check_licenses(target_python=None):
 
 
 if __name__ == "__main__":
-    check_licenses()
+    parser = argparse.ArgumentParser(description="Check licenses for Python dependencies.")
+    parser.add_argument(
+        "--target-python",
+        dest="target_python",
+        help="Path to the target Python interpreter (e.g. .venv/bin/python)",
+        required=False
+    )
+    args = parser.parse_args()
+
+    check_licenses(args.target_python)
