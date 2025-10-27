@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sinc with this file.
 
+## [0.14.4] - 2025-10-27
+
+### Changed
+
+- Added dependencies to pyproject.toml.
+
 ## [0.14.3] - 2025-10-16
 
 ### Fixed

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeap_pipeline"
-version = "0.14.3"
+version = "0.14.4"
 authors = [
     { name="Laris Jacobs", email="laris.jacobs@bit.admin.ch" },
     { name="Jose Alvarez Morales", email="jose.alvarezmorales@bit.admin.ch"},
@@ -19,8 +19,22 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+
 license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
+
+dependencies = [
+    "boto3==1.39.15",
+    "requests==2.32.4"
+]
+
+[project.optional-dependencies]
+dev = [
+    "twine==6.1.0",
+    "pip-licenses==5.0.0",
+    "pytest==8.4.1",
+    "build==1.2.2.post1"
+]
 
 [project.urls]
 Homepage = "https://github.com/jeap-admin-ch/jeap-python-pipeline-lib"
