@@ -49,6 +49,7 @@ For more details about the library, please refer to the [modules documentation](
 
 * **Add new dependencies**:
     - Add the dependency to the `requirements.txt` file.
+    - Additionally add the dependency into the `pyproject.toml` into the section `[project.dependencies]` or `[project.optional-dependencies]` for dev dependencies.
     - Ensure the license of the dependency is compatible with the project's license.
     - Keep the THIRD-PARTY-LICENSES.md file up to date.
 
