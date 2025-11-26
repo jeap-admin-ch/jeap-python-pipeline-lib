@@ -5,20 +5,20 @@
 | boto3              | 1.39.15     | Apache Software License                                      |
 | botocore           | 1.39.17     | Apache Software License                                      |
 | build              | 1.2.2.post1 | MIT License                                                  |
-| certifi            | 2025.10.5   | Mozilla Public License 2.0 (MPL 2.0)                         |
+| certifi            | 2025.11.12  | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.4.4       | MIT                                                          |
-| docutils           | 0.22.2      | BSD License; GNU General Public License (GPL); Public Domain |
-| exceptiongroup     | 1.3.0       | MIT License                                                  |
+| docutils           | 0.22.3      | BSD License; GNU General Public License (GPL); Public Domain |
+| exceptiongroup     | 1.3.1       | MIT License                                                  |
 | id                 | 1.5.0       | Apache Software License                                      |
 | importlib_metadata | 8.7.0       | Apache Software License                                      |
 | iniconfig          | 2.3.0       | MIT                                                          |
 | jaraco.classes     | 3.4.0       | MIT License                                                  |
 | jaraco.context     | 6.0.1       | MIT License                                                  |
 | jmespath           | 1.0.1       | MIT License                                                  |
-| keyring            | 25.6.0      | MIT License                                                  |
+| keyring            | 25.7.0      | MIT                                                          |
 | markdown-it-py     | 4.0.0       | MIT License                                                  |
 | mdurl              | 0.1.2       | MIT License                                                  |
-| nh3                | 0.3.1       | MIT                                                          |
+| nh3                | 0.3.2       | MIT                                                          |
 | packaging          | 25.0        | Apache Software License; BSD License                         |
 | pluggy             | 1.6.0       | MIT License                                                  |
 | pycparser          | 2.23        | BSD License                                                  |
