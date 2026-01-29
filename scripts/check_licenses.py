@@ -17,6 +17,7 @@ def check_licenses(target_python=None):
     # List of licenses compatible with Apache 2.0
     compatible_licenses = [
         "Apache Software License",
+        "Apache-2.0",
         "BSD License",
         "GNU General Public License (GPL)",
         "MIT",
