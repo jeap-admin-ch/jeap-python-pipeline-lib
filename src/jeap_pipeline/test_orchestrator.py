@@ -41,7 +41,7 @@ def start_test_case(
     for attempt in range(retry_count):
         try:
             response = requests.post(f"{test_orchestrator_url}/{test_case}", timeout=10)
-            if response.status_code == 200:
+            if 200 <= response.status_code < 300:
                 test_id = response.text.strip()
                 if test_id:
                     logger.info(f"Started test case '{test_case}' with test ID '{test_id}'")
@@ -83,7 +83,7 @@ def wait_until_test_case_ends(
     while True:
         try:
             response = requests.get(f"{test_orchestrator_url}/{test_id}/conclusion", timeout=10)
-            if response.status_code == 200:
+            if 200 <= response.status_code < 300:
                 test_result = response.text.strip().replace('"', '')
         except requests.RequestException as e:
             logger.warning(f"Failed to retrieve result for test ID '{test_id}': {e}")

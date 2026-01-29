@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.14.5] - 2026-01-29
+
+### Changed
+
+- Accept all 2xx response codes as success in test_orchestrator module.
+
 ## [0.14.4] - 2025-10-27
 
 ### Changed
