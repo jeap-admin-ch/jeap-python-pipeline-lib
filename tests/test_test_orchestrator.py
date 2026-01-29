@@ -41,6 +41,13 @@ class TestTestOrchestrator(unittest.TestCase):
         self.assertEqual(result, PASS)
 
     @patch("src.jeap_pipeline.test_orchestrator.requests.get")
+    def test_wait_until_test_case_ends_pass_2xx_response(self, mock_get):
+        mock_get.return_value.status_code = 201
+        mock_get.return_value.text = '"PASS"'
+        result = wait_until_test_case_ends("test-id", "http://test-orchestrator-url", timeout_minutes=1)
+        self.assertEqual(result, PASS)
+
+    @patch("src.jeap_pipeline.test_orchestrator.requests.get")
     def test_wait_until_test_case_ends_timeout(self, mock_get):
         mock_get.return_value.status_code = 200
         mock_get.return_value.text = '"NO_RESULT"'
