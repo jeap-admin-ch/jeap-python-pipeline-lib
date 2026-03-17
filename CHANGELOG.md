@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.15.0] - 2026-03-18
+
+### Changed
+
+- Both Docker coordinates and artifact URL are required for the deployment log service, as they serve distinct purposes and are both included in the deployment log request DTO.
+
 ## [0.14.5] - 2026-01-29
 
 ### Changed

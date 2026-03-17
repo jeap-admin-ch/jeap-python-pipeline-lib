@@ -96,18 +96,18 @@ class DeploymentUnit:
         self.artifact_repo_url: str = artifact_repo_url
 
     @staticmethod
-    def docker_image(artifact_repo_url: str):
+    def docker_image(deployment_unit_coordinates: str, artifact_repo_url: str):
         """
         Creates a DeploymentUnit instance for a Docker image.
 
         Args:
+            deployment_unit_coordinates (str): The coordinates of the deployment unit.
             artifact_repo_url (str): The URL of the artifact repository.
 
         Returns:
             DeploymentUnit: A DeploymentUnit instance for a Docker image.
         """
-        url_without_prefix: str = artifact_repo_url.replace("https://", "")
-        return DeploymentUnit(DeploymentUnitType.DOCKER_IMAGE, url_without_prefix, artifact_repo_url)
+        return DeploymentUnit(DeploymentUnitType.DOCKER_IMAGE, deployment_unit_coordinates, artifact_repo_url)
 
     @staticmethod
     def maven_jar(coordinates: str, artifact_repo_url: str):

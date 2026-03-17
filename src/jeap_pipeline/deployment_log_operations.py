@@ -205,6 +205,7 @@ def create_deployment_json(deployment_platform: str,
                            maven_published: str,
                            remedy_change_id: str,
                            deployment_target_url: str,
+                           docker_coordinates: str,
                            artifact_url: str,
                            deployment_log_url: str,
                            dl_username: str,
@@ -229,6 +230,7 @@ def create_deployment_json(deployment_platform: str,
         maven_published (str): The Maven published version.
         remedy_change_id (str): The remedy change ID.
         deployment_target_url (str): The Deployment Target URL.
+        docker_coordinates (str): The coordinates of the deployment unit.
         artifact_url (str): The URL of the artifact.
         deployment_log_url (str): The URL of the deployment log service.
         dl_username (str): The username for the deployment log service.
@@ -248,7 +250,7 @@ def create_deployment_json(deployment_platform: str,
                                          git_commit_timestamp, maven_published, app_name, system_name).to_dict()
 
     print("### component_version: ", component_version)
-    unit = DeploymentUnit.docker_image(artifact_url).to_dict()
+    unit = DeploymentUnit.docker_image(docker_coordinates, artifact_url).to_dict()
 
     #pipeline_run_url = get_github_action_job_url()
     print("## pipeline_run_url:", pipeline_run_url)
