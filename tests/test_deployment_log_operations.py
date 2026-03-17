@@ -116,6 +116,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         maven_published = "1.0.0"
         remedy_change_id = "test-remedy-id"
         aws_url = "https://example.com/aws"
+        docker_coordinates = "docker-coordinates"
         artifact_url = "https://example.com/artifact"
         deployment_log_url = "https://example.com/deployment-log"
         dl_username = "user"
@@ -124,7 +125,7 @@ class TestDeploymentLogOperations(unittest.TestCase):
         deployment_json = create_deployment_json(deployment_platform,
             actual_timestamp, system_name, app_name, cluster, deploy_stage, git_commit, git_commit_timestamp,
             version_control_url, pipeline_run_url, started_by, image_tag_aws, git_tag_timestamp, maven_published,
-            remedy_change_id, aws_url, artifact_url, deployment_log_url, dl_username, dl_password
+            remedy_change_id, aws_url, docker_coordinates, artifact_url, deployment_log_url, dl_username, dl_password
         )
 
         self.assertIn("startedAt", deployment_json)

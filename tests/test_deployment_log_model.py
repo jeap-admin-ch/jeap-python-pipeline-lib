@@ -6,20 +6,20 @@ from src.jeap_pipeline import DeploymentTarget, ComponentVersion, DeploymentUnit
 class TestDeploymentLogOperations(unittest.TestCase):
 
     def test_deployment_target_to_dict(self):
-        target = DeploymentTarget("type1", "http://example.com", "details")
+        target = DeploymentTarget("type1", "https://example.com", "details")
         expected_dict = {
             "type": "type1",
-            "url": "http://example.com",
+            "url": "https://example.com",
             "details": "details"
         }
         self.assertEqual(target.to_dict(), expected_dict)
 
     def test_component_version_to_dict(self):
-        version = ComponentVersion("v1.0", "2023-01-01T00:00:00Z", "http://vcs.com", "abc123", "2023-01-01T00:00:00Z", "1.0.0", "component1", "system1")
+        version = ComponentVersion("v1.0", "2023-01-01T00:00:00Z", "https://vcs.com", "abc123", "2023-01-01T00:00:00Z", "1.0.0", "component1", "system1")
         expected_dict = {
             "versionName": "v1.0",
             "taggedAt": "2023-01-01T00:00:00Z",
-            "versionControlUrl": "http://vcs.com",
+            "versionControlUrl": "https://vcs.com",
             "commitRef": "abc123",
             "commitedAt": "2023-01-01T00:00:00Z",
             "publishedVersion": "1.0.0",
@@ -29,10 +29,10 @@ class TestDeploymentLogOperations(unittest.TestCase):
         self.assertEqual(version.to_dict(), expected_dict)
 
     def test_deployment_unit_docker_image(self):
-        unit = DeploymentUnit.docker_image("https://repo.com/image")
+        unit = DeploymentUnit.docker_image("docker-coordinates", "https://repo.com/image")
         expected_dict = {
             "type": "DOCKER_IMAGE",
-            "coordinates": "repo.com/image",
+            "coordinates": "docker-coordinates",
             "artifactRepositoryUrl": "https://repo.com/image"
         }
         self.assertEqual(unit.to_dict(), expected_dict)
@@ -47,19 +47,19 @@ class TestDeploymentLogOperations(unittest.TestCase):
         self.assertEqual(unit.to_dict(), expected_dict)
 
     def test_link_to_dict(self):
-        link = Link("example", "http://example.com")
+        link = Link("example", "https://example.com")
         expected_dict = {
             "label": "example",
-            "url": "http://example.com"
+            "url": "https://example.com"
         }
         self.assertEqual(link.to_dict(), expected_dict)
 
     def test_deployment_to_dict(self):
-        target = DeploymentTarget("type1", "http://example.com", {"key": "value"})
-        version = ComponentVersion("v1.0", "2023-01-01T00:00:00Z", "http://vcs.com", "abc123", "2023-01-01T00:00:00Z", "1.0.0", "component1", "system1")
-        unit = DeploymentUnit.docker_image("https://repo.com/image")
+        target = DeploymentTarget("type1", "https://example.com", {"key": "value"})
+        version = ComponentVersion("v1.0", "2023-01-01T00:00:00Z", "https://vcs.com", "abc123", "2023-01-01T00:00:00Z", "1.0.0", "component1", "system1")
+        unit = DeploymentUnit.docker_image("docker-coordinates", "https://repo.com/image")
         changelog = ChangeLog("v1.0", "v0.9", ["JIRA-123"])
-        link = Link("example", "http://example.com")
+        link = Link("example", "https://example.com")
         deployment = Deployment("2023-01-01T00:00:00Z", "user1", "env1", target, [link], version, unit, changelog, "RC-123", {"key": "value"}, {"CODE"})
         expected_dict = {
             "startedAt": "2023-01-01T00:00:00Z",
