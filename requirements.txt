@@ -1,6 +1,6 @@
 twine==6.1.0
-pip-licenses==5.0.0
-pytest==8.4.1
+pip-licenses==5.5.1
+pytest==9.0.2
 build==1.2.2.post1
-boto3==1.39.15
-requests==2.32.4
+boto3==1.42.75
+requests==2.32.5
