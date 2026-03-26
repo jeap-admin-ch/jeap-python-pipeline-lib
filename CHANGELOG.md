@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.15.1] - 2026-03-26
+
+### Changed
+
+- boto3 updated to version 1.42.75
+- requests updated to version 2.32.5
+- pip-licenses updated to version 5.5.1
+- pytest updated to version 9.0.2
+
 ## [0.15.0] - 2026-03-18
 
 ### Changed
