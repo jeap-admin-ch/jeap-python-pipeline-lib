@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jeap_pipeline"
-version = "0.15.1"
+version = "0.15.2"
 authors = [
     { name="Laris Jacobs", email="laris.jacobs@bit.admin.ch" },
     { name="Jose Alvarez Morales", email="jose.alvarezmorales@bit.admin.ch"},
@@ -24,16 +24,16 @@ license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 
 dependencies = [
-    "boto3==1.42.75",
-    "requests==2.32.5"
+    "boto3==1.42.77",
+    "requests==2.33.0"
 ]
 
 [project.optional-dependencies]
 dev = [
-    "twine==6.1.0",
+    "twine==6.2.0",
     "pip-licenses==5.5.1",
     "pytest==9.0.2",
-    "build==1.2.2.post1"
+    "build==1.4.2"
 ]
 
 [project.urls]
