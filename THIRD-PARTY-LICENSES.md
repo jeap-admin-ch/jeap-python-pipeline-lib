@@ -2,9 +2,9 @@
 |--------------------|-------------|--------------------------------------------------------------|
 | Pygments           | 2.19.2      | BSD License                                                  |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
-| boto3              | 1.42.75     | Apache-2.0                                                   |
-| botocore           | 1.42.76     | Apache-2.0                                                   |
-| build              | 1.2.2.post1 | MIT License                                                  |
+| boto3              | 1.42.77     | Apache-2.0                                                   |
+| botocore           | 1.42.77     | Apache-2.0                                                   |
+| build              | 1.4.2       | MIT                                                          |
 | certifi            | 2026.2.25   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.4.6       | MIT                                                          |
 | docutils           | 0.22.4      | BSD License; GNU General Public License (GPL); Public Domain |
@@ -26,10 +26,10 @@
 | pytest             | 9.0.2       | MIT                                                          |
 | python-dateutil    | 2.9.0.post0 | Apache Software License; BSD License                         |
 | readme_renderer    | 44.0        | Apache Software License                                      |
-| requests           | 2.32.5      | Apache Software License                                      |
+| requests           | 2.33.0      | Apache Software License                                      |
 | requests-toolbelt  | 1.0.0       | Apache Software License                                      |
 | rfc3986            | 2.0.0       | Apache Software License                                      |
 | rich               | 14.3.3      | MIT License                                                  |
 | s3transfer         | 0.16.0      | Apache Software License                                      |
 | six                | 1.17.0      | MIT License                                                  |
-| twine              | 6.1.0       | Apache Software License                                      |
+| twine              | 6.2.0       | Apache-2.0                                                   |
