@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.15.2] - 2026-03-27
+
+### Changed
+
+- twine updated to version 6.2.0
+- build updated to version 1.4.2
+- boto3 updated to version  1.42.77
+- requests updated to version 2.33.0
+
 ## [0.15.1] - 2026-03-26
 
 ### Changed
