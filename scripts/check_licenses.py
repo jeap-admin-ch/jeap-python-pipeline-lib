@@ -19,6 +19,7 @@ def check_licenses(target_python=None):
         "Apache Software License",
         "Apache-2.0",
         "BSD License",
+        "BSD-2-Clause",
         "BSD-3-Clause",
         "GNU General Public License (GPL)",
         "MIT",
