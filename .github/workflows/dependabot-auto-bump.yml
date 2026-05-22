@@ -19,6 +19,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
       - name: Bump minor version
         id: bump
         run: |
@@ -46,11 +51,20 @@ jobs:
             { print }
           ' CHANGELOG.md > CHANGELOG.md.new && mv CHANGELOG.md.new CHANGELOG.md
 
+      - name: Regenerate THIRD-PARTY-LICENSES.md
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pip-licenses
+          python3 scripts/check_licenses.py --target-python .venv/bin/python
+
       - name: Commit and push
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add pyproject.toml publiccode.yml CHANGELOG.md
+          git add pyproject.toml publiccode.yml CHANGELOG.md THIRD-PARTY-LICENSES.md
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Bump version to ${{ steps.bump.outputs.new }}"
             git push
