@@ -5,9 +5,9 @@
 | boto3              | 1.42.77     | Apache-2.0                                                   |
 | botocore           | 1.42.97     | Apache-2.0                                                   |
 | build              | 1.4.2       | MIT                                                          |
-| certifi            | 2026.5.20   | Mozilla Public License 2.0 (MPL 2.0)                         |
+| certifi            | 2026.6.17   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.4.7       | MIT                                                          |
-| docutils           | 0.22.4      | BSD License; GNU General Public License (GPL); Public Domain |
+| docutils           | 0.23        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.1       | MIT License                                                  |
 | id                 | 1.6.1       | Apache Software License                                      |
 | importlib_metadata | 9.0.0       | Apache-2.0                                                   |
@@ -25,7 +25,7 @@
 | pyproject_hooks    | 1.2.0       | MIT License                                                  |
 | pytest             | 9.0.2       | MIT                                                          |
 | python-dateutil    | 2.9.0.post0 | Apache Software License; BSD License                         |
-| readme_renderer    | 44.0        | Apache Software License                                      |
+| readme_renderer    | 45.0        | Apache-2.0                                                   |
 | requests           | 2.33.0      | Apache Software License                                      |
 | requests-toolbelt  | 1.0.0       | Apache Software License                                      |
 | rfc3986            | 2.0.0       | Apache Software License                                      |
