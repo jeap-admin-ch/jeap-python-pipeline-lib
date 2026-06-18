@@ -118,7 +118,7 @@ Please make sure to also update publiccode.yml and CHANGELOG.md accordingly.
 
 On every push a CI pipeline is triggered, which builds and uploads the artifact to the (test)-pypi repository.
 * On the main branch, the version number remains unchanged and the artifact is published as a stable release to pypi.
-* On feature branches, a valid development release suffix (.dev<timestamp>) is added to the version. The artifact is published to TestPyPI.
+* On feature branches, a valid development release suffix (`.dev<timestamp>`) is added to the version. The artifact is published to TestPyPI.
 
 ### Publishing via GitHub Actions
 The publishing process is automated using GitHub Actions. The CI pipeline is defined in the `.github/workflows/publish.yml` file. The key steps involved are:
