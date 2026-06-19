@@ -1,6 +1,6 @@
 twine==6.2.0
-pip-licenses==5.5.1
+pip-licenses==5.5.5
 pytest==9.0.2
-build==1.4.2
-boto3==1.42.77
+build==1.4.4
+boto3==1.42.97
 requests==2.33.0
