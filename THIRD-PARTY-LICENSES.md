@@ -6,7 +6,7 @@
 | botocore           | 1.42.97     | Apache-2.0                                                   |
 | build              | 1.4.2       | MIT                                                          |
 | certifi            | 2026.6.17   | Mozilla Public License 2.0 (MPL 2.0)                         |
-| charset-normalizer | 3.4.7       | MIT                                                          |
+| charset-normalizer | 3.4.9       | MIT                                                          |
 | docutils           | 0.23        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.1       | MIT License                                                  |
 | id                 | 1.6.1       | Apache Software License                                      |
@@ -18,7 +18,7 @@
 | keyring            | 25.7.0      | MIT                                                          |
 | markdown-it-py     | 4.2.0       | MIT License                                                  |
 | mdurl              | 0.1.2       | MIT License                                                  |
-| nh3                | 0.3.5       | MIT                                                          |
+| nh3                | 0.3.6       | MIT                                                          |
 | packaging          | 26.2        | Apache-2.0 OR BSD-2-Clause                                   |
 | pluggy             | 1.6.0       | MIT License                                                  |
 | pycparser          | 3.0         | BSD-3-Clause                                                 |
