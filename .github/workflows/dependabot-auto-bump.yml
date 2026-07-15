@@ -3,6 +3,7 @@ name: Dependabot auto version bump
 on:
   pull_request:
     types: [opened]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -10,7 +11,7 @@ permissions:
 
 jobs:
   bump:
-    if: github.actor == 'dependabot[bot]'
+    if: github.event_name == 'workflow_dispatch' || github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Generate App token
@@ -23,7 +24,7 @@ jobs:
       - name: Checkout PR branch
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Python
