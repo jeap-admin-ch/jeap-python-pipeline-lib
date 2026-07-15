@@ -8,7 +8,7 @@ on:
       - 'dependabot/**'
 
 jobs:
-  build-and-publish:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,17 +19,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.10'
-
-      - name: Set values
-        id: set-values
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "pypi-repository=pypi" >> $GITHUB_OUTPUT
-            echo "pypi-api-token=${{ secrets.PYPI_API_TOKEN }}" >> $GITHUB_OUTPUT
-          else
-            echo "pypi-repository=testpypi" >> $GITHUB_OUTPUT
-            echo "pypi-api-token=${{ secrets.PYPI_TEST_API_TOKEN }}" >> $GITHUB_OUTPUT
-          fi
 
       - name: Set version
         id: set-version
@@ -82,9 +71,50 @@ jobs:
             echo "No changes to commit"
           fi
 
-      - name: Publish package
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ steps.set-values.outputs.pypi-api-token }}
-        run: |
-          .venv/bin/python -m twine upload --verbose --repository ${{ steps.set-values.outputs.pypi-repository }} dist/*
+      - name: Upload distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  publish-to-pypi:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/jeap-pipeline
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-to-testpypi:
+    if: github.ref != 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/jeap-pipeline
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
