@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.16.0] - 2026-07-15
+
+### Changed
+
+- Updated GHA workflow dependencies, move to trusted publishing on PyPI
+
 ## [0.15.2] - 2026-03-27
 
 ### Changed
