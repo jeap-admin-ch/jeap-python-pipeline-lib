@@ -24,7 +24,7 @@ license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 
 dependencies = [
-    "boto3==1.43.48",
+    "boto3==1.43.49",
     "requests==2.34.2"
 ]
 
@@ -33,7 +33,7 @@ dev = [
     "twine==6.2.0",
     "pip-licenses==5.5.5",
     "pytest==9.1.1",
-    "build==1.5.1"
+    "build==1.5.0"
 ]
 
 [project.urls]
