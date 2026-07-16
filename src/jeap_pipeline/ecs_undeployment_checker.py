@@ -25,10 +25,10 @@ def _is_service_undeployed(client, cluster_name: str, service_name: str) -> bool
         elif len(services) == 0 and failures:
             return failures[0].get('reason') == 'MISSING'
         else:
-            print(f"Unexpected response while checking undeployment status: {response}")
+            print(f"Unexpected response while checking undeployment status: {response}", flush=True)
             return False
     except ClientError as e:
-        print(f"AWS ClientError while checking service status: {e}")
+        print(f"AWS ClientError while checking service status: {e}", flush=True)
         return False
 
 
@@ -78,11 +78,11 @@ def wait_until_undeployment_has_finished(cluster_name: str,
     call_count = 0
     max_calls = max_duration // interval
 
-    print(f"Waiting for undeployment of service '{service_name}' in cluster '{cluster_name}'...")
+    print(f"Waiting for undeployment of service '{service_name}' in cluster '{cluster_name}'...", flush=True)
 
     while call_count <= max_calls:
         if _is_service_undeployed(client, cluster_name, service_name):
-            print(f"Undeployment of service '{service_name}' completed successfully.")
+            print(f"Undeployment of service '{service_name}' completed successfully.", flush=True)
             return
         time.sleep(interval)
         call_count += 1
