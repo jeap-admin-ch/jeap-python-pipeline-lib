@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.18.0] - 2026-07-16
+
+### Added
+
+- The ECS deployment checker periodically logs (every 30 seconds by default, configurable via the new
+  `progress_interval` parameter) the current vs the expected deployment state while waiting: service name,
+  rollout state, running/pending/failed task counts, and the currently deployed image vs the expected
+  image version. The completion message now includes the service name as well.
+
 ## [0.17.0] - 2026-07-15
 
 ### Changed
