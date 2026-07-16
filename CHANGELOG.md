@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.18.1] - 2026-07-16
+
+### Fixed
+
+- Flush progress and status output of the ECS deployment and undeployment checkers immediately, so it
+  appears in real time in CI logs (stdout is block-buffered when not attached to a terminal, which
+  delayed all progress lines until process exit).
+
 ## [0.18.0] - 2026-07-16
 
 ### Added

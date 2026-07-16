@@ -82,14 +82,14 @@ def wait_until_new_deployment_has_occurred(cluster_name: str,
                 task_definition = _get_task_definition(client, task_definition_arn)
 
                 if _check_image_version(task_definition, expected_image_version):
-                    print(f"[{service_name}] Deployment completed with image version {expected_image_version}")
+                    print(f"[{service_name}] Deployment completed with image version {expected_image_version}", flush=True)
                     return task_definition_arn
 
             if call_count % log_every == 0:
                 print(f"[{service_name}] Waiting for deployment with expected image version "
-                      f"{expected_image_version}: {_describe_deployment_state(client, primary_deployment)}")
+                      f"{expected_image_version}: {_describe_deployment_state(client, primary_deployment)}", flush=True)
         except client.exceptions.ClientError as e:
-            print(f"Error: {e}")
+            print(f"Error: {e}", flush=True)
 
         time.sleep(interval)
         call_count += 1
