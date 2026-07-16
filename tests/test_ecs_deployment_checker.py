@@ -205,7 +205,7 @@ class TestECSDeployment(unittest.TestCase):
 
         progress_lines = [c.args[0] for c in mock_print.call_args_list if 'Waiting for deployment' in c.args[0]]
         self.assertEqual(progress_lines, [])
-        mock_print.assert_called_once_with('[test-service] Deployment completed with image version latest')
+        mock_print.assert_called_once_with('[test-service] Deployment completed with image version latest', flush=True)
 
 
 if __name__ == '__main__':
