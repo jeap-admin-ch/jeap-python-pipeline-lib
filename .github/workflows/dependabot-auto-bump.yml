@@ -1,7 +1,11 @@
 name: Dependabot auto version bump
 
 on:
-  pull_request:
+  # pull_request_target instead of pull_request: Dependabot-triggered pull_request
+  # runs only receive Dependabot secrets, so BOT_APP_ID/BOT_APP_PRIVATE_KEY would
+  # be empty. pull_request_target runs in the base-repo context with Actions
+  # secrets; the job below is gated to Dependabot PRs from this repository.
+  pull_request_target:
     types: [opened]
   workflow_dispatch:
 
@@ -11,7 +15,7 @@ permissions:
 
 jobs:
   bump:
-    if: github.event_name == 'workflow_dispatch' || github.actor == 'dependabot[bot]'
+    if: github.event_name == 'workflow_dispatch' || (github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
       - name: Generate App token
