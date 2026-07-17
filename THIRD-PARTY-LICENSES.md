@@ -2,8 +2,8 @@
 |--------------------|-------------|--------------------------------------------------------------|
 | Pygments           | 2.20.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
-| boto3              | 1.43.49     | Apache-2.0                                                   |
-| botocore           | 1.43.49     | Apache-2.0                                                   |
+| boto3              | 1.43.50     | Apache-2.0                                                   |
+| botocore           | 1.43.50     | Apache-2.0                                                   |
 | build              | 1.5.0       | MIT                                                          |
 | certifi            | 2026.6.17   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.4.9       | MIT                                                          |
