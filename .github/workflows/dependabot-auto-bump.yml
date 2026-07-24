@@ -5,9 +5,16 @@ on:
   # runs only receive Dependabot secrets, so BOT_APP_ID/BOT_APP_PRIVATE_KEY would
   # be empty. pull_request_target runs in the base-repo context with Actions
   # secrets; the job below is gated to Dependabot PRs from this repository.
+  # synchronize/reopened: Dependabot force-pushes an updated branch onto an
+  # already-open PR (e.g. a grouped update gets superseded before merge), which
+  # otherwise merges without a version bump since "opened" alone doesn't cover it.
   pull_request_target:
-    types: [opened]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
+
+concurrency:
+  group: dependabot-bump-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -15,6 +22,10 @@ permissions:
 
 jobs:
   bump:
+    # The commit step below pushes with the GitHub App token, so the resulting
+    # synchronize event is attributed to the app's own bot actor, not
+    # dependabot[bot] - this condition already prevents that push from
+    # retriggering this workflow, so no separate loop-guard is needed.
     if: github.event_name == 'workflow_dispatch' || (github.actor == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     steps:
@@ -36,8 +47,25 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Check if version already bumped
+        id: check
+        if: github.event_name == 'pull_request_target'
+        run: |
+          set -euo pipefail
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          git fetch --depth=1 origin "$BASE_REF"
+          BASE_VERSION=$(git show "origin/${BASE_REF}:pyproject.toml" | grep '^version =' | cut -d '"' -f2)
+          CURRENT_VERSION=$(grep '^version =' pyproject.toml | cut -d '"' -f2)
+          if [ "$BASE_VERSION" != "$CURRENT_VERSION" ]; then
+            echo "Version already bumped ahead of $BASE_REF ($CURRENT_VERSION vs $BASE_VERSION), skipping."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Bump minor version
         id: bump
+        if: steps.check.outputs.skip != 'true'
         run: |
           set -euo pipefail
           CURRENT=$(grep '^version =' pyproject.toml | cut -d '"' -f2)
@@ -64,6 +92,7 @@ jobs:
           ' CHANGELOG.md > CHANGELOG.md.new && mv CHANGELOG.md.new CHANGELOG.md
 
       - name: Regenerate THIRD-PARTY-LICENSES.md
+        if: steps.check.outputs.skip != 'true'
         run: |
           python3 -m venv .venv
           .venv/bin/pip install --upgrade pip
@@ -73,6 +102,7 @@ jobs:
           python3 scripts/check_licenses.py --target-python .venv/bin/python
 
       - name: Commit and push
+        if: steps.check.outputs.skip != 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
