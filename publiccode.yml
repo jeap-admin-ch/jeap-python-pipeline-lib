@@ -1,7 +1,7 @@
 publiccodeYmlVersion: 0.4.0
 name: jeap-python-pipeline-lib
-softwareVersion: 0.19.0
-releaseDate: 2026-07-17
+softwareVersion: 0.20.0
+releaseDate: 2026-07-24
 applicationSuite: jEAP
 url: "https://github.com/jeap-admin-ch/jeap-python-pipeline-lib.git"
 landingURL: "https://github.com/jeap-admin-ch/jeap"

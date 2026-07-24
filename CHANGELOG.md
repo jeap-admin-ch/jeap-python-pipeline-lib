@@ -7,6 +7,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.20.0] - 2026-07-24
+
+### Added
+
+- New multi-service ECS deployment wait function `wait_until_deployments_completed` polling all services
+  in a single loop with concise progress logging: one aligned line per service state change (waiting for
+  rollout -> rollout started -> rollout in progress -> rollout completed) prefixed with the elapsed time,
+  a single-line heartbeat while nothing changes, and a timeout error listing the incomplete services with
+  their last known state.
+- New `get_deployment_status` function and `DeploymentStatus` model deriving an explicit deployment state
+  by comparing the PRIMARY deployment's image against the expected version first: while the previous
+  image is still deployed the state is "waiting for rollout" instead of misleadingly reporting the old
+  deployment's rollout state as COMPLETED.
+
 ## [0.19.0] - 2026-07-17
 
 ### Changed
