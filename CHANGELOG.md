@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [0.20.1] - 2026-07-24
+
+### Fixed
+
+- Dependabot auto version bump workflow now also triggers when Dependabot updates an already-open PR
+  (e.g. a superseding push), not just on PR open, so those updates no longer merge without a version
+  bump and changelog entry.
+
 ## [0.20.0] - 2026-07-24
 
 ### Added
