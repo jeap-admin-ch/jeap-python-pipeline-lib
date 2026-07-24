@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.0.0] - 2026-07-24
+
+### Removed
+
+- **BREAKING:** Removed `wait_until_new_deployment_has_occurred`. Use `wait_until_deployments_completed`
+  instead, which polls all services in a single loop, correctly reports "waiting for rollout" instead of
+  the previous deployment's stale `rollout COMPLETED`, and returns a mapping of service name to deployed
+  task definition ARN rather than a single ARN.
+
 ## [0.20.1] - 2026-07-24
 
 ### Fixed
