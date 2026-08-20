@@ -1,5 +1,10 @@
 # __init__.py
-from .ecs_deployment_checker import wait_until_deployments_completed, get_deployment_status, DeploymentStatus
+from .ecs_deployment_checker import (wait_until_deployments_completed, get_deployment_status,
+                                     get_failure_diagnostics, DeploymentStatus,
+                                     DeploymentFailedError,
+                                     DeploymentFailureDiagnostics, ServiceFailureDiagnostics,
+                                     StoppedTaskDiagnostics, ContainerFailureDiagnostics,
+                                     CloudWatchLogEvent)
 from .ecs_undeployment_checker import wait_until_undeployment_has_finished, is_service_undeployed
 from .github_dispatch_event import send_dispatch_event
 from .pact_pacticipants import get_pacticipant_names

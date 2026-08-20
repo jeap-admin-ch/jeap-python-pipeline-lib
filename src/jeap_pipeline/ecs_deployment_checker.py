@@ -1,6 +1,8 @@
 import boto3
 import time
-from dataclasses import dataclass
+from botocore.exceptions import ClientError
+from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 # Deployment states derived from the PRIMARY ECS deployment compared against the expected image version
@@ -27,6 +29,50 @@ class DeploymentStatus:
     failed_tasks: Any = '?'
     current_image_tag: str = 'unknown'
     task_definition_arn: Optional[str] = None
+
+
+@dataclass
+class CloudWatchLogEvent:
+    message: str
+    timestamp: Optional[int] = None
+    ingestion_time: Optional[int] = None
+
+
+@dataclass
+class ContainerFailureDiagnostics:
+    name: str
+    exit_code: Optional[int] = None
+    reason: Optional[str] = None
+    last_status: Optional[str] = None
+    log_group: Optional[str] = None
+    log_stream: Optional[str] = None
+    log_region: Optional[str] = None
+    log_events: List[CloudWatchLogEvent] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+
+
+@dataclass
+class StoppedTaskDiagnostics:
+    task_arn: str
+    task_definition_arn: str
+    stopped_at: Optional[datetime] = None
+    stop_code: Optional[str] = None
+    stopped_reason: Optional[str] = None
+    containers: List[ContainerFailureDiagnostics] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+
+
+@dataclass
+class ServiceFailureDiagnostics:
+    service_name: str
+    deployment_status: Optional[DeploymentStatus] = None
+    stopped_task: Optional[StoppedTaskDiagnostics] = None
+    errors: List[str] = field(default_factory=list)
+
+
+@dataclass
+class DeploymentFailureDiagnostics:
+    services: List[ServiceFailureDiagnostics] = field(default_factory=list)
 
 
 def _get_primary_deployment(client: boto3.client, cluster_name: str, service_name: str) -> Dict[str, Any]:
@@ -90,7 +136,7 @@ def get_deployment_status(client: boto3.client,
 
     if image == 'unknown':
         state = STATE_UNKNOWN
-    elif not image.endswith(expected_image_version):
+    elif image_tag != expected_image_version:
         state = WAITING_FOR_ROLLOUT
     else:
         rollout_state = primary_deployment.get('rolloutState', 'UNKNOWN')
@@ -103,6 +149,218 @@ def get_deployment_status(client: boto3.client,
                             failed_tasks=primary_deployment.get('failedTasks', '?'),
                             current_image_tag=image_tag,
                             task_definition_arn=task_definition_arn)
+
+
+def _describe_stopped_tasks(client: boto3.client,
+                            cluster_name: str,
+                            service_name: str,
+                            errors: List[str]) -> List[Dict[str, Any]]:
+    task_arns = []
+    request = {
+        'cluster': cluster_name,
+        'serviceName': service_name,
+        'desiredStatus': 'STOPPED',
+    }
+    while True:
+        try:
+            response = client.list_tasks(**request)
+        except Exception as e:
+            errors.append(f"Could not list stopped ECS tasks: {e}")
+            break
+        task_arns.extend(response.get('taskArns', []))
+        next_token = response.get('nextToken')
+        if not next_token:
+            break
+        request['nextToken'] = next_token
+
+    tasks = []
+    for offset in range(0, len(task_arns), 100):
+        try:
+            response = client.describe_tasks(cluster=cluster_name, tasks=task_arns[offset:offset + 100])
+            tasks.extend(response.get('tasks', []))
+            for failure in response.get('failures', []):
+                errors.append(f"Could not describe ECS task {failure.get('arn', 'unknown')}: "
+                              f"{failure.get('reason', 'unknown reason')}")
+        except Exception as e:
+            errors.append(f"Could not describe stopped ECS tasks: {e}")
+    return tasks
+
+
+def _stopped_at_sort_key(task: Dict[str, Any]) -> float:
+    stopped_at = task.get('stoppedAt')
+    if hasattr(stopped_at, 'timestamp'):
+        return stopped_at.timestamp()
+    if isinstance(stopped_at, (int, float)):
+        return float(stopped_at)
+    return float('-inf')
+
+
+def _get_last_stopped_task(client: boto3.client,
+                           cluster_name: str,
+                           service_name: str,
+                           task_definition_arn: str,
+                           errors: List[str]) -> Optional[Dict[str, Any]]:
+    tasks = _describe_stopped_tasks(client, cluster_name, service_name, errors)
+    matching_tasks = [task for task in tasks
+                      if task.get('taskDefinitionArn') == task_definition_arn]
+    return max(matching_tasks, key=_stopped_at_sort_key) if matching_tasks else None
+
+
+def _log_configuration_by_container(task_definition: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+    result = {}
+    for container_definition in task_definition.get('containerDefinitions', []):
+        log_configuration = container_definition.get('logConfiguration', {})
+        if log_configuration.get('logDriver') == 'awslogs':
+            result[container_definition.get('name', '')] = log_configuration.get('options', {})
+    return result
+
+
+def _task_id(task_arn: str) -> str:
+    return task_arn.rsplit('/', 1)[-1]
+
+
+def _get_log_events(logs_clients: Dict[str, Any],
+                    aws_region: str,
+                    verify_ssl: bool,
+                    log_group: str,
+                    log_stream: str,
+                    limit: int,
+                    errors: List[str]) -> List[CloudWatchLogEvent]:
+    try:
+        if aws_region not in logs_clients:
+            logs_clients[aws_region] = boto3.client('logs', region_name=aws_region, verify=verify_ssl)
+        response = logs_clients[aws_region].get_log_events(logGroupName=log_group,
+                                                           logStreamName=log_stream,
+                                                           limit=limit,
+                                                           startFromHead=False)
+        return [CloudWatchLogEvent(message=event.get('message', ''),
+                                   timestamp=event.get('timestamp'),
+                                   ingestion_time=event.get('ingestionTime'))
+                for event in response.get('events', [])]
+    except Exception as e:
+        errors.append(f"Could not load CloudWatch log events: {e}")
+        return []
+
+
+def _get_container_diagnostics(task: Dict[str, Any],
+                               task_definition: Dict[str, Any],
+                               default_aws_region: str,
+                               include_logs: bool,
+                               log_event_limit: int,
+                               verify_ssl: bool,
+                               logs_clients: Dict[str, Any]) -> List[ContainerFailureDiagnostics]:
+    log_configurations = _log_configuration_by_container(task_definition)
+    containers = []
+    for container in task.get('containers', []):
+        name = container.get('name', 'unknown')
+        log_options = log_configurations.get(name, {})
+        log_group = log_options.get('awslogs-group')
+        log_region = log_options.get('awslogs-region', default_aws_region) if log_group else None
+        log_stream = container.get('logStreamName')
+        stream_prefix = log_options.get('awslogs-stream-prefix')
+        if not log_stream and stream_prefix and name:
+            log_stream = f"{stream_prefix}/{name}/{_task_id(task.get('taskArn', ''))}"
+
+        diagnostics = ContainerFailureDiagnostics(name=name,
+                                                  exit_code=container.get('exitCode'),
+                                                  reason=container.get('reason'),
+                                                  last_status=container.get('lastStatus'),
+                                                  log_group=log_group,
+                                                  log_stream=log_stream,
+                                                  log_region=log_region)
+        if include_logs:
+            if not log_group or not log_stream or not log_region:
+                diagnostics.errors.append("CloudWatch log group or stream could not be determined")
+            else:
+                diagnostics.log_events = _get_log_events(logs_clients, log_region, verify_ssl,
+                                                          log_group, log_stream, log_event_limit,
+                                                          diagnostics.errors)
+        containers.append(diagnostics)
+    return containers
+
+
+def get_failure_diagnostics(cluster_name: str,
+                            services: List[str],
+                            expected_image_version: str,
+                            aws_region: str,
+                            deployment_statuses: Optional[Dict[str, DeploymentStatus]] = None,
+                            include_logs: bool = False,
+                            log_event_limit: int = 100,
+                            verify_ssl: bool = True) -> DeploymentFailureDiagnostics:
+    """Collect structured ECS deployment failure details without producing output.
+
+    Each AWS lookup is isolated: unavailable stopped-task details, task definitions or CloudWatch
+    logs are recorded in the corresponding ``errors`` list without discarding information obtained
+    by the other lookups. Status snapshots can be supplied to preserve a failed task definition if
+    ECS has already rolled back. Application logs are loaded only when ``include_logs`` is explicitly
+    true.
+    """
+    if not 1 <= log_event_limit <= 10_000:
+        raise ValueError("log_event_limit must be between 1 and 10000")
+
+    client = boto3.client('ecs', region_name=aws_region, verify=verify_ssl)
+    image_cache: Dict[str, str] = {}
+    logs_clients: Dict[str, Any] = {}
+    result = DeploymentFailureDiagnostics()
+
+    for service_name in services:
+        service = ServiceFailureDiagnostics(service_name=service_name)
+        result.services.append(service)
+        status = deployment_statuses.get(service_name) if deployment_statuses else None
+        if status is None:
+            try:
+                status = get_deployment_status(client, cluster_name, service_name,
+                                               expected_image_version, image_cache)
+            except Exception as e:
+                service.errors.append(f"Could not determine ECS deployment status: {e}")
+                continue
+        service.deployment_status = status
+        if status.state == WAITING_FOR_ROLLOUT:
+            service.errors.append(
+                f"Rollout of expected image {expected_image_version} did not become PRIMARY; "
+                "stopped-task diagnostics were skipped")
+            continue
+        if status.state == STATE_UNKNOWN:
+            service.errors.append(
+                "Deployment state is unknown; stopped-task diagnostics were skipped")
+            continue
+        if status.state == ROLLOUT_COMPLETED:
+            continue
+
+        task_definition_arn = status.task_definition_arn
+        if not task_definition_arn:
+            service.errors.append("ECS PRIMARY deployment has no task definition")
+            continue
+
+        error_count_before_lookup = len(service.errors)
+        stopped_task = _get_last_stopped_task(client, cluster_name, service_name,
+                                              task_definition_arn, service.errors)
+        if not stopped_task:
+            if len(service.errors) == error_count_before_lookup:
+                service.errors.append("No stopped ECS task found for the deployment task definition")
+            continue
+
+        task_diagnostics = StoppedTaskDiagnostics(
+            task_arn=stopped_task.get('taskArn', ''),
+            task_definition_arn=task_definition_arn,
+            stopped_at=stopped_task.get('stoppedAt'),
+            stop_code=stopped_task.get('stopCode'),
+            stopped_reason=stopped_task.get('stoppedReason'))
+        service.stopped_task = task_diagnostics
+
+        try:
+            task_definition = _get_task_definition(client, task_definition_arn)
+        except Exception as e:
+            task_diagnostics.errors.append(f"Could not describe ECS task definition: {e}")
+            task_definition = {}
+
+        task_diagnostics.containers = _get_container_diagnostics(
+            stopped_task, task_definition, aws_region, include_logs, log_event_limit,
+            verify_ssl, logs_clients)
+        if not task_diagnostics.containers:
+            task_diagnostics.errors.append("Stopped ECS task has no container details")
+
+    return result
 
 
 def _format_clock(seconds: int) -> str:
@@ -124,6 +382,19 @@ def _describe_status(status: DeploymentStatus, rollout_already_started: bool) ->
     if status.state == ROLLOUT_FAILED:
         return f"rollout FAILED ({counts}, failed {status.failed_tasks})"
     return "deployment state unknown (no PRIMARY deployment or task definition unavailable)"
+
+
+class DeploymentFailedError(Exception):
+    def __init__(self,
+                 expected_image_version: str,
+                 failed_deployments: Dict[str, DeploymentStatus]):
+        self.expected_image_version = expected_image_version
+        self.failed_deployments = dict(failed_deployments)
+        details = ", ".join(
+            f"{service_name} ({_describe_status(status, True)})"
+            for service_name, status in self.failed_deployments.items())
+        super().__init__(
+            f"The deployment of image version {expected_image_version} failed: {details}")
 
 
 def _summarize_pending(statuses: Dict[str, DeploymentStatus], pending_services: List[str]) -> str:
@@ -151,9 +422,8 @@ def wait_until_deployments_completed(cluster_name: str,
     state change (waiting for rollout -> rollout started -> rollout in progress -> rollout completed),
     prefixed with the elapsed time, plus a single-line heartbeat while nothing changes.
 
-    Make sure to set the following environment variables before running the script:
-    - AWS_ACCESS_KEY_ID
-    - AWS_SECRET_ACCESS_KEY
+    AWS credentials are resolved through the boto3 default credential provider chain, for example
+    environment variables, a shared credentials file, container credentials or an IAM role.
 
     Args:
         cluster_name (str): The name of the ECS cluster.
@@ -170,7 +440,8 @@ def wait_until_deployments_completed(cluster_name: str,
         dict: Mapping of service name to the ARN of the deployed task definition.
 
     Raises:
-        Exception: If not all deployments complete within the maximum duration.
+        DeploymentFailedError: If ECS reports a failed rollout.
+        Exception: If the deployment does not complete within the maximum duration.
     """
     client = boto3.client('ecs', region_name=aws_region, verify=verify_ssl)
     name_width = max(len(service_name) for service_name in services)
@@ -189,13 +460,14 @@ def wait_until_deployments_completed(cluster_name: str,
     while call_count <= max_calls:
         elapsed = call_count * interval
         anything_logged = False
+        failed_services = []
         for service_name in services:
             if service_name in completed:
                 continue
             try:
                 status = get_deployment_status(client, cluster_name, service_name,
                                                expected_image_version, image_cache)
-            except client.exceptions.ClientError as e:
+            except ClientError as e:
                 print(f"Error: {e}", flush=True)
                 continue
             statuses[service_name] = status
@@ -213,6 +485,13 @@ def wait_until_deployments_completed(cluster_name: str,
                 anything_logged = True
             if status.state == ROLLOUT_IN_PROGRESS:
                 rollout_started[service_name] = True
+            elif status.state == ROLLOUT_FAILED:
+                failed_services.append(service_name)
+
+        if failed_services:
+            raise DeploymentFailedError(
+                expected_image_version,
+                {service_name: statuses[service_name] for service_name in failed_services})
 
         if len(completed) == len(services):
             plural = 's' if len(services) != 1 else ''
