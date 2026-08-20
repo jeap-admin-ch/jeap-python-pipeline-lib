@@ -16,3 +16,42 @@ The library currently includes the following modules:
 # 📖 Usage
 
 To use these modules, install the package via PyPI or Test PyPI, depending on the version you want to work with (see main repository documentation for installation steps).
+
+## ECS deployment failure diagnostics
+
+Failure details and application logs are collected only through the explicit diagnostics API; the
+deployment waiter never prints CloudWatch logs:
+
+```python
+from jeap_pipeline import (
+    DeploymentFailedError,
+    get_failure_diagnostics,
+    wait_until_deployments_completed,
+)
+
+try:
+    wait_until_deployments_completed(
+        cluster_name, services, expected_image_version, aws_region
+    )
+except DeploymentFailedError as error:
+    diagnostics = get_failure_diagnostics(
+        cluster_name=cluster_name,
+        services=services,
+        expected_image_version=expected_image_version,
+        aws_region=aws_region,
+        deployment_statuses=error.failed_deployments,
+        include_logs=True,
+        log_event_limit=100,
+    )
+    raise
+```
+
+The result contains structured service, deployment status, stopped-task, container and CloudWatch
+log-event dataclasses. Errors from individual AWS lookups are retained in the corresponding
+`errors` list, so missing log permissions do not hide ECS task failure information. Passing the
+status snapshots from `DeploymentFailedError` keeps diagnostics tied to the failed task definition
+even if ECS has already rolled the service back.
+
+`DeploymentFailedError` can preserve only rollout failures observed during polling. If ECS marks a
+rollout failed and completes its rollback entirely between two polls, the waiter may observe only
+the previous image again and eventually report a timeout instead.

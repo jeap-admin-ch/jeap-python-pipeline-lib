@@ -7,6 +7,27 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.3.0] - 2026-08-20
+
+### Added
+
+- Added an explicit `get_failure_diagnostics` ECS API returning structured service, stopped-task,
+  container and optional CloudWatch log diagnostics without writing application logs to output.
+
+### Changed
+
+- ECS deployment image tags are now compared exactly.
+- The deployment waiter now stops immediately and raises `DeploymentFailedError` when ECS reports
+  a failed rollout.
+- `DeploymentFailedError` retains the failed task definition for each service. Callers can pass this
+  information to `get_failure_diagnostics` to retrieve diagnostics for the failed deployment even
+  if ECS has already rolled back to the previous task definition.
+
+### Fixed
+
+- Catch AWS client failures through `botocore.exceptions.ClientError`, avoiding secondary exception
+  lookup errors while polling ECS.
+
 ## [1.2.0] - 2026-08-14
 
 ### Changed
