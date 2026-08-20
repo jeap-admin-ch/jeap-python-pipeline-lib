@@ -8,6 +8,7 @@ from src.jeap_pipeline.ecs_deployment_checker import (_get_primary_deployment,
                                                       wait_until_deployments_completed,
                                                       get_deployment_status,
                                                       get_failure_diagnostics,
+                                                      build_cloudwatch_log_stream_url,
                                                       DeploymentFailedError,
                                                       WAITING_FOR_ROLLOUT,
                                                       ROLLOUT_IN_PROGRESS,
@@ -230,6 +231,12 @@ class TestGetFailureDiagnostics(unittest.TestCase):
         self.assertEqual(container.log_group, '/ecs/application')
         self.assertEqual(container.log_stream, 'ecs/application/latest')
         self.assertEqual(container.log_region, 'eu-central-1')
+        self.assertTrue(container.has_awslogs_configuration)
+        self.assertEqual(
+            container.cloudwatch_log_url,
+            'https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1'
+            '#logsV2:log-groups/log-group/$252Fecs$252Fapplication/log-events/'
+            'ecs$252Fapplication$252Flatest')
         self.assertEqual(container.log_events[0].message, 'startup failed')
         logs_client.get_log_events.assert_called_once_with(
             logGroupName='/ecs/application', logStreamName='ecs/application/latest',
@@ -246,7 +253,72 @@ class TestGetFailureDiagnostics(unittest.TestCase):
         container = result.services[0].stopped_task.containers[0]
         self.assertEqual(container.log_events, [])
         self.assertEqual(container.errors, [])
+        self.assertTrue(container.has_awslogs_configuration)
+        self.assertIsNotNone(container.cloudwatch_log_url)
         mock_boto_client.assert_called_once_with('ecs', region_name='eu-central-2', verify=True)
+
+    @patch('boto3.client')
+    def test_aws_injected_container_without_awslogs_configuration_has_no_log_error(self,
+                                                                                   mock_boto_client):
+        ecs_client = self._ecs_client()
+        ecs_client.describe_tasks.return_value['tasks'][1]['containers'].append({
+            'name': 'aws-guardduty-agent-123456',
+            'exitCode': 137,
+            'reason': 'Container stopped by runtime',
+            'lastStatus': 'STOPPED',
+        })
+        logs_client = MagicMock()
+        logs_client.get_log_events.return_value = {'events': []}
+        mock_boto_client.side_effect = lambda service, **kwargs: {
+            'ecs': ecs_client, 'logs': logs_client}[service]
+
+        result = get_failure_diagnostics('cluster', ['service'], '0.0.2-new', 'eu-central-2',
+                                         include_logs=True)
+
+        containers = result.services[0].stopped_task.containers
+        injected_container = next(container for container in containers
+                                  if container.name == 'aws-guardduty-agent-123456')
+        self.assertFalse(injected_container.has_awslogs_configuration)
+        self.assertIsNone(injected_container.cloudwatch_log_url)
+        self.assertEqual(injected_container.errors, [])
+        self.assertEqual(injected_container.exit_code, 137)
+        self.assertEqual(injected_container.reason, 'Container stopped by runtime')
+        logs_client.get_log_events.assert_called_once()
+
+    @patch('boto3.client')
+    def test_missing_log_group_with_awslogs_configuration_is_an_error(self, mock_boto_client):
+        ecs_client = self._ecs_client()
+        log_options = ecs_client.describe_task_definition.return_value[
+            'taskDefinition']['containerDefinitions'][0]['logConfiguration']['options']
+        del log_options['awslogs-group']
+        mock_boto_client.return_value = ecs_client
+
+        result = get_failure_diagnostics('cluster', ['service'], '0.0.2-new', 'eu-central-2',
+                                         include_logs=True)
+
+        container = result.services[0].stopped_task.containers[0]
+        self.assertTrue(container.has_awslogs_configuration)
+        self.assertIsNone(container.cloudwatch_log_url)
+        self.assertEqual(
+            container.errors,
+            ['CloudWatch log group or stream could not be determined'])
+
+    @patch('boto3.client')
+    def test_incomplete_awslogs_configuration_is_not_an_error_when_logs_are_not_requested(
+            self, mock_boto_client):
+        ecs_client = self._ecs_client()
+        log_options = ecs_client.describe_task_definition.return_value[
+            'taskDefinition']['containerDefinitions'][0]['logConfiguration']['options']
+        del log_options['awslogs-group']
+        mock_boto_client.return_value = ecs_client
+
+        result = get_failure_diagnostics('cluster', ['service'], '0.0.2-new', 'eu-central-2',
+                                         include_logs=False)
+
+        container = result.services[0].stopped_task.containers[0]
+        self.assertTrue(container.has_awslogs_configuration)
+        self.assertIsNone(container.cloudwatch_log_url)
+        self.assertEqual(container.errors, [])
 
     @patch('boto3.client')
     def test_log_access_failure_does_not_hide_ecs_diagnostics(self, mock_boto_client):
@@ -386,6 +458,24 @@ class TestGetFailureDiagnostics(unittest.TestCase):
         self.assertEqual(service.deployment_status.state, ROLLOUT_FAILED)
         self.assertEqual(service.stopped_task.task_definition_arn, self.TASK_DEFINITION_ARN)
         ecs_client.describe_services.assert_not_called()
+
+
+class TestBuildCloudWatchLogStreamUrl(unittest.TestCase):
+
+    def test_builds_direct_cloudwatch_log_stream_url(self):
+        url = build_cloudwatch_log_stream_url(
+            'eu-central-2',
+            '/aws/ecs/jme-nivel-process-context-app-service',
+            'jme-nivel-process-context-app-service/'
+            'jme-nivel-process-context-app-service/e7d0615da0574864a734b260147aed77')
+
+        self.assertEqual(
+            url,
+            'https://eu-central-2.console.aws.amazon.com/cloudwatch/home?region=eu-central-2'
+            '#logsV2:log-groups/log-group/'
+            '$252Faws$252Fecs$252Fjme-nivel-process-context-app-service/log-events/'
+            'jme-nivel-process-context-app-service$252Fjme-nivel-process-context-app-service'
+            '$252Fe7d0615da0574864a734b260147aed77')
 
 
 class TestWaitUntilDeploymentsCompleted(unittest.TestCase):

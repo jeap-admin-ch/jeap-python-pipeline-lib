@@ -1,5 +1,6 @@
 # __init__.py
 from .ecs_deployment_checker import (wait_until_deployments_completed, get_deployment_status,
+                                     build_cloudwatch_log_stream_url,
                                      get_failure_diagnostics, DeploymentStatus,
                                      DeploymentFailedError,
                                      DeploymentFailureDiagnostics, ServiceFailureDiagnostics,
