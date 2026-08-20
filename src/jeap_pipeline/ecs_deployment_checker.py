@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote
 
 # Deployment states derived from the PRIMARY ECS deployment compared against the expected image version
 WAITING_FOR_ROLLOUT = 'WAITING_FOR_ROLLOUT'
@@ -44,9 +45,11 @@ class ContainerFailureDiagnostics:
     exit_code: Optional[int] = None
     reason: Optional[str] = None
     last_status: Optional[str] = None
+    has_awslogs_configuration: bool = False
     log_group: Optional[str] = None
     log_stream: Optional[str] = None
     log_region: Optional[str] = None
+    cloudwatch_log_url: Optional[str] = None
     log_events: List[CloudWatchLogEvent] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
@@ -211,12 +214,32 @@ def _log_configuration_by_container(task_definition: Dict[str, Any]) -> Dict[str
     for container_definition in task_definition.get('containerDefinitions', []):
         log_configuration = container_definition.get('logConfiguration', {})
         if log_configuration.get('logDriver') == 'awslogs':
-            result[container_definition.get('name', '')] = log_configuration.get('options', {})
+            result[container_definition.get('name', '')] = log_configuration.get('options') or {}
     return result
 
 
 def _task_id(task_arn: str) -> str:
     return task_arn.rsplit('/', 1)[-1]
+
+
+def _encode_cloudwatch_path(value: str) -> str:
+    return quote(quote(value, safe=''), safe='').replace('%', '$')
+
+
+def build_cloudwatch_log_stream_url(
+        aws_region: str,
+        log_group: str,
+        log_stream: str) -> str:
+    """Build a CloudWatch console URL pointing directly to a log stream."""
+    encoded_group = _encode_cloudwatch_path(log_group)
+    encoded_stream = _encode_cloudwatch_path(log_stream)
+
+    return (
+        f"https://{aws_region}.console.aws.amazon.com/cloudwatch/home"
+        f"?region={aws_region}"
+        f"#logsV2:log-groups/log-group/{encoded_group}"
+        f"/log-events/{encoded_stream}"
+    )
 
 
 def _get_log_events(logs_clients: Dict[str, Any],
@@ -253,22 +276,32 @@ def _get_container_diagnostics(task: Dict[str, Any],
     containers = []
     for container in task.get('containers', []):
         name = container.get('name', 'unknown')
+        has_awslogs_configuration = name in log_configurations
         log_options = log_configurations.get(name, {})
         log_group = log_options.get('awslogs-group')
-        log_region = log_options.get('awslogs-region', default_aws_region) if log_group else None
-        log_stream = container.get('logStreamName')
+        log_region = (log_options.get('awslogs-region', default_aws_region)
+                      if has_awslogs_configuration else None)
+        log_stream = container.get('logStreamName') if has_awslogs_configuration else None
         stream_prefix = log_options.get('awslogs-stream-prefix')
         if not log_stream and stream_prefix and name:
             log_stream = f"{stream_prefix}/{name}/{_task_id(task.get('taskArn', ''))}"
+
+        cloudwatch_log_url = (
+            build_cloudwatch_log_stream_url(log_region, log_group, log_stream)
+            if log_region and log_group and log_stream
+            else None
+        )
 
         diagnostics = ContainerFailureDiagnostics(name=name,
                                                   exit_code=container.get('exitCode'),
                                                   reason=container.get('reason'),
                                                   last_status=container.get('lastStatus'),
+                                                  has_awslogs_configuration=has_awslogs_configuration,
                                                   log_group=log_group,
                                                   log_stream=log_stream,
-                                                  log_region=log_region)
-        if include_logs:
+                                                  log_region=log_region,
+                                                  cloudwatch_log_url=cloudwatch_log_url)
+        if include_logs and has_awslogs_configuration:
             if not log_group or not log_stream or not log_region:
                 diagnostics.errors.append("CloudWatch log group or stream could not be determined")
             else:

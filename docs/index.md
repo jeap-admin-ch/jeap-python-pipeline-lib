@@ -55,3 +55,9 @@ even if ECS has already rolled the service back.
 `DeploymentFailedError` can preserve only rollout failures observed during polling. If ECS marks a
 rollout failed and completes its rollback entirely between two polls, the waiter may observe only
 the previous image again and eventually report a timeout instead.
+
+Each container diagnostic indicates through `has_awslogs_configuration` whether its task-definition
+entry uses the `awslogs` driver. Runtime-injected containers without such an entry remain available
+for exit-code and failure-reason analysis but do not report missing CloudWatch configuration as an
+error. When region, log group and log stream are known, `cloudwatch_log_url` links directly to that
+stream in the AWS console, regardless of whether log events were requested.

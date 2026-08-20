@@ -13,6 +13,8 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
 - Added an explicit `get_failure_diagnostics` ECS API returning structured service, stopped-task,
   container and optional CloudWatch log diagnostics without writing application logs to output.
+- ECS failure diagnostics now include a direct CloudWatch console URL for each container with a
+  complete `awslogs` configuration.
 
 ### Changed
 
@@ -27,6 +29,8 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
 - Catch AWS client failures through `botocore.exceptions.ClientError`, avoiding secondary exception
   lookup errors while polling ECS.
+- Runtime-injected ECS containers without an `awslogs` task-definition entry no longer produce
+  misleading CloudWatch location or log retrieval errors.
 
 ## [1.2.0] - 2026-08-14
 
