@@ -63,7 +63,7 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Bump minor version
+      - name: Bump patch version
         id: bump
         if: steps.check.outputs.skip != 'true'
         run: |
@@ -71,7 +71,8 @@ jobs:
           CURRENT=$(grep '^version =' pyproject.toml | cut -d '"' -f2)
           MAJOR=$(echo "$CURRENT" | cut -d. -f1)
           MINOR=$(echo "$CURRENT" | cut -d. -f2)
-          NEW="${MAJOR}.$((MINOR + 1)).0"
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+          NEW="${MAJOR}.${MINOR}.$((PATCH + 1))"
           TODAY=$(date +%Y-%m-%d)
           echo "current=$CURRENT" >> $GITHUB_OUTPUT
           echo "new=$NEW" >> $GITHUB_OUTPUT
