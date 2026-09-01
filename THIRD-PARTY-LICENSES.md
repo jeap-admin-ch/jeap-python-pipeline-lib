@@ -3,14 +3,14 @@
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
 | boto3              | 1.43.79     | Apache-2.0                                                   |
-| botocore           | 1.43.82     | Apache-2.0                                                   |
+| botocore           | 1.43.85     | Apache-2.0                                                   |
 | build              | 1.5.0       | MIT                                                          |
 | certifi            | 2026.7.22   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.5.1       | MIT                                                          |
 | docutils           | 0.23        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.1       | MIT License                                                  |
 | id                 | 1.6.1       | Apache Software License                                      |
-| importlib_metadata | 9.0.0       | Apache-2.0                                                   |
+| importlib_metadata | 9.0.1       | Apache-2.0                                                   |
 | iniconfig          | 2.3.0       | MIT                                                          |
 | jaraco.classes     | 3.4.0       | MIT License                                                  |
 | jaraco.context     | 6.1.2       | MIT                                                          |
@@ -25,7 +25,7 @@
 | pyproject_hooks    | 1.2.0       | MIT License                                                  |
 | pytest             | 9.1.1       | MIT                                                          |
 | python-dateutil    | 2.9.0.post0 | Apache Software License; BSD License                         |
-| readme_renderer    | 45.0        | Apache-2.0                                                   |
+| readme_renderer    | 46.0        | Apache-2.0                                                   |
 | requests           | 2.34.2      | Apache Software License                                      |
 | requests-toolbelt  | 1.0.0       | Apache Software License                                      |
 | rfc3986            | 2.0.0       | Apache Software License                                      |
