@@ -7,6 +7,26 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.6.0] - 2026-09-09
+
+### Added
+
+- Documentation validation for the jEAP doc workflow: `validate_documentation_sets` validates every
+  documentation set a repository configures - the content of its Markdown in the pipeline, the path
+  tree against the structure template in the jEAP doc service - and renders the report a workflow
+  prints. `documentation_sets_from_config` reads the configuration: what the repository documents at
+  its root, its documentation sets under `docs`. See
+  [Documentation validation](docs/doc-validation.md).
+- `oauth_token.fetch_client_credentials_token` obtains an access token with the OAuth 2.0 client
+  credentials grant, retrying an authorization server that answers with a server error or cannot be
+  reached. It knows nothing about the service being called, so any pipeline calling a jEAP service
+  with a client of its own can use it.
+
+### Changed
+
+- New runtime dependencies `markdown-it-py` and `PyYAML`, both MIT, for the CommonMark parse and
+  the front matter of a documentation page.
+
 ## [1.5.2] - 2026-09-04
 
 ### Changed

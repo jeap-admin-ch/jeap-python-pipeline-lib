@@ -19,6 +19,7 @@ pip install jeap-pipeline
 | Install and first use | [docs/getting-started.md](docs/getting-started.md) |
 | Module catalog (what the library provides) | [docs/modules.md](docs/modules.md) |
 | ECS deployment checks & failure diagnostics | [docs/ecs-deployment.md](docs/ecs-deployment.md) |
+| Documentation validation for the jEAP doc service | [docs/doc-validation.md](docs/doc-validation.md) |
 | Building, testing and publishing the library | [docs/development.md](docs/development.md) |
 
 ## Changelog

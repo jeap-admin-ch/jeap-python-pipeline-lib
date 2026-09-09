@@ -1,5 +1,6 @@
 | Name               | Version     | License                                                      |
 |--------------------|-------------|--------------------------------------------------------------|
+| PyYAML             | 6.0.3       | MIT License                                                  |
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
 | boto3              | 1.43.85     | Apache-2.0                                                   |

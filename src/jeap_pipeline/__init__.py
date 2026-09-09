@@ -19,3 +19,17 @@ from .deployment_log_operations import put_deployment_state, put_to_deployment_l
 from .deployment_log_model import DeploymentTarget, ComponentVersion, DeploymentUnit, Link, Deployment, ChangeLog
 from .remedy_operations import create_change_request_in_remedy, get_change_request_id_from_response
 from .test_orchestrator import start_test_case, wait_until_test_case_ends, start_multiple_test_cases, NO_RESULT, PASS
+from .oauth_token import fetch_client_credentials_token, OAuthTokenError
+from .doc_path_tree import collect_documentation_paths, DocumentationPathError
+from .doc_content_validation import (validate_documentation_content, ContentReport, ContentFinding,
+                                     ContentFindingCode, ALLOWED_FRONT_MATTER_KEYS,
+                                     DEFAULT_MAX_FINDINGS)
+from .doc_service_operations import (DocumentationSet, documentation_sets_from_config,
+                                     validate_documentation_structure, StructureReport,
+                                     StructureFinding, StructureFindingCode, CONFIGURATION_ROOT_KEYS,
+                                     DOCUMENTATION_SET_KEYS, DOCUMENTATION_SETS_KEY,
+                                     SUBJECT_KEYS,
+                                     DOCUMENTATION_TYPES, SOURCE_FORMATS, DocumentationConfigError,
+                                     DocServiceError, DocServiceRequestError)
+from .doc_validation import (validate_documentation_sets, DocumentationValidationOutcome,
+                             SetOutcome, Finding, format_set_report)

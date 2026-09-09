@@ -50,4 +50,6 @@ deployment waiter and failure diagnostics.
 ## Related
 
 - [Modules](modules.md) — what the library provides, grouped by area.
+- [Documentation validation](doc-validation.md) — validating a repository's documentation before it is
+  uploaded to the jEAP doc service.
 - [Development](development.md) — building, testing and publishing the library itself.
