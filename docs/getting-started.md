@@ -10,9 +10,9 @@ Jenkins, Tekton) call its functions from small Python steps.
 pip install jeap-pipeline
 ```
 
-Requires Python 3.8+. The library depends on `boto3` (AWS calls) and `requests` (HTTP calls to jEAP
+Requires Python 3.10+. The library depends on `boto3` (AWS calls) and `requests` (HTTP calls to jEAP
 services such as the Deployment Log, the Message Contract Service, the Pact Broker and the test
-orchestrator).
+orchestrator), and on `markdown-it-py` and `PyYAML` for reading documentation pages.
 
 ## Use
 

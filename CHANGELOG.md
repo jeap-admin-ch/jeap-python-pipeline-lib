@@ -26,6 +26,9 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
 - New runtime dependencies `markdown-it-py` and `PyYAML`, both MIT, for the CommonMark parse and
   the front matter of a documentation page.
+- **The minimum Python version is now declared as 3.10**, up from 3.8. It has been the effective
+  minimum for a while: the pinned `boto3` and `requests` both require 3.10 or newer, so an install
+  on 3.8 or 3.9 already failed to resolve. `markdown-it-py` requires it too.
 
 ## [1.5.2] - 2026-09-04
 
