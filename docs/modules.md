@@ -70,7 +70,32 @@ test runs from a pipeline.
 | `send_dispatch_event` | Send a GitHub repository dispatch event to trigger a downstream workflow. |
 | `create_change_request_in_remedy`, `get_change_request_id_from_response` | Create a change request in Remedy and read its id from the response. |
 
+## Documentation validation (jEAP doc service)
+
+Validate a repository's documentation before it is uploaded - see
+[Documentation validation](doc-validation.md) for the checks, the configuration and the finding codes.
+
+| Symbol                                                                                                                                                                                                            | Purpose                                                                                                                                                             |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `validate_documentation_sets`                                                                                                                                                                                     | Validate every documentation set of a repository, content and structure, and render the report a pipeline prints.                                                   |
+| `documentation_sets_from_config`                                                                                                                                                                                  | Read a documentation configuration - what the repository documents at its root, its sets under `docs` - into typed sets, applying the rules of the upload contract. |
+| `DocumentationSet`                                                                                                                                                                                                | One folder of documentation and what it is; `validation_query_parameters` selects what a structure validation may send.                                             |
+| `validate_documentation_content`                                                                                                                                                                                  | The pipeline's responsibility: encoding, CommonMark, front matter allowlist, links that resolve.                                                                    |
+| `collect_documentation_paths`                                                                                                                                                                                     | Walk a documentation folder into the relative path tree an upload would carry.                                                                                      |
+| `validate_documentation_structure`                                                                                                                                                                                | Ask the doc service whether a path tree would be accepted, with retries on a server error.                                                                          |
+| `DocumentationValidationOutcome`, `SetOutcome`, `Finding`, `ContentReport`, `ContentFinding`, `StructureReport`, `StructureFinding`                                                                               | Result dataclasses.                                                                                                                                                 |
+| `ContentFindingCode`, `StructureFindingCode`, `ALLOWED_FRONT_MATTER_KEYS`, `CONFIGURATION_ROOT_KEYS`, `DOCUMENTATION_SET_KEYS`, `SUBJECT_KEYS`, `DOCUMENTATION_SETS_KEY`, `DOCUMENTATION_TYPES`, `SOURCE_FORMATS` | What the checks branch on, and what is allowed.                                                                                                                     |
+| `DocumentationConfigError`, `DocumentationPathError`, `DocServiceError`, `DocServiceRequestError`                                                                                                                 | Errors.                                                                                                                                                             |
+
+## OAuth 2.0 tokens
+
+| Symbol                           | Purpose                                                                                                                   |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `fetch_client_credentials_token` | Obtain an access token with the client credentials grant, for any jEAP service a pipeline calls with a client of its own. |
+| `OAuthTokenError`                | Raised when no token could be obtained.                                                                                   |
+
 ## Related
 
 - [Getting started](getting-started.md)
 - [ECS deployment checks](ecs-deployment.md)
+- [Documentation validation](doc-validation.md)

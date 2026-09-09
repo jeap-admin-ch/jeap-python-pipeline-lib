@@ -35,7 +35,7 @@ python3 -m pytest              # tests
 python3 scripts/full_build.py  # deps upgrade + build + tests + THIRD-PARTY-LICENSES.md
 ```
 
-Python 3.8+. Runtime deps: `boto3`, `requests`.
+Python 3.8+. Runtime deps: `boto3`, `requests`, `markdown-it-py`, `PyYAML`.
 
 ## Conventions
 
