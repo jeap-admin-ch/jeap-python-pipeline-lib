@@ -2,7 +2,7 @@ twine==7.0.0
 pip-licenses==5.5.5
 pytest==9.1.1
 build==1.6.0
-boto3==1.43.85
+boto3==1.43.89
 requests==2.34.2
 markdown-it-py==4.2.0
 PyYAML==6.0.3
