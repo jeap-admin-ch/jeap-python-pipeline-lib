@@ -21,6 +21,27 @@ class DocumentationPathError(ValueError):
     """Raised when the configured path of a documentation set cannot be walked."""
 
 
+def documentation_set_root(path: str, working_directory: str = ".") -> str:
+    """
+    The folder of a documentation set, relative to what the pipeline checked out.
+
+    Args:
+        path (str): The `path` of a documentation configuration entry, relative to the root of the
+            repository.
+        working_directory (str, optional): What that path is relative to. Defaults to the current
+            directory, which in a pipeline is the checkout.
+
+    Returns:
+        str: The folder to walk.
+    """
+    normalized = str(path).replace("\\", "/")
+    if normalized.startswith("./"):
+        normalized = normalized[2:]
+    if working_directory in (".", "", None):
+        return normalized or "."
+    return f"{working_directory.rstrip('/')}/{normalized}" if normalized else working_directory
+
+
 def collect_documentation_paths(root: str) -> List[str]:
     """
     List every file below `root` as a relative path, the way an upload would carry it.

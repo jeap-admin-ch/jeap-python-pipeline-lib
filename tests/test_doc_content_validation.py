@@ -192,7 +192,7 @@ class LinkTest(ContentValidationTestCase):
         self.assertTrue(self.validate("1-intro/goals.md").accepted)
 
     def test_a_site_absolute_link_is_not_checked(self):
-        self.write("1-intro/goals.md", "[the generated view](/systems/jme/system-architecture/)\n")
+        self.write("1-intro/goals.md", "[the generated view](/systems/orders/system-architecture/)\n")
 
         self.assertTrue(self.validate("1-intro/goals.md").accepted)
 

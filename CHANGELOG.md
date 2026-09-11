@@ -7,6 +7,32 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.7.0] - 2026-09-11
+
+### Added
+
+- Documentation upload for the jEAP doc workflow: `upload_documentation_sets` packs every
+  documentation set it is given into a ZIP of exactly the files it validated and uploads it to the
+  jEAP doc service, which takes it over into the documentation it generates. The upload id of a set
+  is derived from the identity of the run, so a retry repeats an upload while a re-run starts a new
+  one, and the same file is sent on every attempt. A set the doc service would not publish is
+  reported with its findings, in the layout the validation prints them in, rather than as a failed
+  request. See [Documentation upload](docs/doc-upload.md).
+- `DocumentationSet.upload_query_parameters` selects what an upload says about itself - what the
+  structure validation sends, plus the version of the component or library and the provenance of the
+  commit. A set that needs a version and has none is refused before the doc service sees it.
+
+### Changed
+
+- The message of a `413` from the doc service says that a documentation set holds more files than a
+  set may, which is what the limit bounds - it is no longer only about a `path` pointing at more than
+  the documentation.
+- `DocServiceRequestError` carries a `report`: the findings of the one refusal that is about the
+  documentation rather than about the request, and `None` for every other. A caller can branch on it
+  without asking which endpoint answered.
+- `doc_path_tree.documentation_set_root` turns the `path` of a documentation configuration entry
+  into the folder to walk, which the validation and the upload both do.
+
 ## [1.6.0] - 2026-09-09
 
 ### Added
