@@ -7,7 +7,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
-## [1.7.1] - 2026-09-11
+## [1.8.0] - 2026-09-11
+
+### Added
+
+- **Which branches publish the documentation of a repository is configurable.** `publish-branches`
+  at the root of the documentation configuration holds one list of branch patterns for the whole
+  repository; `publish_branches_of` reads it and `publishes_from` decides, saying which rule decided
+  and why in a sentence a pipeline prints. Without the key a repository publishes from its default
+  branch and nothing else; with it, from the branches the patterns match and nothing else - stating
+  patterns replaces the default rule rather than adding to it, and an empty list is refused. The
+  patterns are branch globs where `*` stops at a `/`, so `release/*` does not match `release/1.2/hotfix` and
+  `feature/**` does match `feature/a/b`. A tag publishes nothing. See
+  [Documentation upload](docs/doc-upload.md#which-branches-publish).
 
 ### Changed
 

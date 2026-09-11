@@ -42,8 +42,13 @@ DOCUMENTATION_SETS_KEY = "docs"
 #: checkout and the pipeline run rather than configured.
 SUBJECT_KEYS: FrozenSet[str] = frozenset({"system", "component", "library", "version", "site"})
 
+#: The key a repository states the branches it publishes from under - not part of an upload, so it
+#: is read out of the configuration separately rather than joining a documentation set.
+PUBLISH_BRANCHES_KEY = "publish-branches"
+
 #: The keys the root may carry.
-CONFIGURATION_ROOT_KEYS: FrozenSet[str] = frozenset(SUBJECT_KEYS | {DOCUMENTATION_SETS_KEY})
+CONFIGURATION_ROOT_KEYS: FrozenSet[str] = frozenset(
+    SUBJECT_KEYS | {DOCUMENTATION_SETS_KEY, PUBLISH_BRANCHES_KEY})
 
 #: The keys one documentation set may carry: what that folder is, which differs from set to set.
 DOCUMENTATION_SET_KEYS: FrozenSet[str] = frozenset({
@@ -172,7 +177,7 @@ class DocumentationSet:
             raise DocumentationConfigError(
                 f"A documentation set has to be an object, not a {type(entry).__name__}.")
 
-        at_the_root = sorted(set(entry.keys()) & SUBJECT_KEYS)
+        at_the_root = sorted(set(entry.keys()) & (SUBJECT_KEYS | {PUBLISH_BRANCHES_KEY}))
         if at_the_root:
             raise DocumentationConfigError(
                 f"{', '.join(repr(key) for key in at_the_root)} belongs at the root of the "
