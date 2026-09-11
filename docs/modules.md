@@ -103,6 +103,19 @@ bundle, the idempotency key and the answers.
 | `DocumentationUploadOutcome`, `SetUploadOutcome`, `UploadResult`                    | Result dataclasses. The outcome carries `findings`, the refused sets flattened the way a validation flattens its own.          |
 | `DEFAULT_UPLOAD_TIMEOUT`, `DEFAULT_IN_PROGRESS_ATTEMPTS`, `MAX_RETRY_AFTER_SECONDS` | The defaults an upload can be given instead, and the cap on a `Retry-After`.                                                   |
 
+## Which branches publish (jEAP doc service)
+
+Decide whether a push publishes the documentation of its repository - see
+[Documentation upload](doc-upload.md#which-branches-publish) for the key, the precedence and the pattern syntax.
+
+| Symbol                                                                             | Purpose                                                                                                   |
+|------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| `publishes_from`                                                                   | Whether a ref publishes, which rule decided and the sentence to print.                                    |
+| `publish_branches_of`                                                              | The branch patterns a repository states at the root of its documentation configuration, if it states any. |
+| `branch_matches`                                                                   | Whether a branch name matches one GitHub branch filter - `*` stops at a `/`, `**` does not.               |
+| `PublicationDecision`                                                              | What was decided: `publishes`, `branch`, `rule`, `pattern` and `reason`.                                  |
+| `PUBLISH_BRANCHES_KEY`, `RULE_DEFAULT_BRANCH`, `RULE_PUBLISH_BRANCHES`, `RULE_TAG` | The configuration key, and the rules a decision names.                                                    |
+
 ## OAuth 2.0 tokens
 
 | Symbol                           | Purpose                                                                                                                   |

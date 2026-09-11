@@ -106,7 +106,7 @@ class RootTest(unittest.TestCase):
         message = str(raised.exception)
         self.assertIn("'systen'", message)
         self.assertIn("at the root", message)
-        self.assertIn("component, docs, library, site, system, version", message)
+        self.assertIn("component, docs, library, publish-branches, site, system, version", message)
 
     def test_a_set_key_at_the_root_is_rejected_and_told_where_it_belongs(self):
         with self.assertRaises(DocumentationConfigError) as raised:
@@ -341,6 +341,24 @@ class ValidationQueryParametersTest(unittest.TestCase):
         for refused in ("version", "site", "label", "source-repository", "source-revision",
                         "source-ref", "source-timestamp", "build-url", "generated-at", "path"):
             self.assertNotIn(refused, parameters)
+
+
+class PublishBranchesKeyTest(unittest.TestCase):
+
+    def test_the_key_is_allowed_at_the_root_and_is_not_a_documentation_set_key(self):
+        sets = documentation_sets_from_config(dict(SYSTEM, **{"publish-branches": ["master"]}))
+
+        self.assertEqual(1, len(sets))
+        self.assertNotIn("publish-branches", sets[0].validation_query_parameters())
+        self.assertNotIn("publish-branches",
+                         sets[0].upload_query_parameters(PROVENANCE))
+
+    def test_it_belongs_at_the_root_and_not_to_a_set(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            documentation_sets_from_config(
+                _component(dict(MARKDOWN_SET, **{"publish-branches": ["master"]})))
+
+        self.assertIn("publish-branches", str(refused.exception))
 
 
 class UploadQueryParametersTest(unittest.TestCase):
