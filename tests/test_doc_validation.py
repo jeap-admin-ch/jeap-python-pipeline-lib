@@ -7,11 +7,11 @@ from jeap_pipeline.doc_service_operations import (DocumentationSet, StructureFin
                                                   StructureReport)
 from jeap_pipeline.doc_validation import validate_documentation_sets
 
-MARKDOWN_SET = DocumentationSet(path="./docs", type="system-docs", system="jme", template="arc42",
+MARKDOWN_SET = DocumentationSet(path="./docs", type="system-docs", system="orders", template="arc42",
                                 source_format="markdown")
 
 HTML_SET = DocumentationSet(path="./html-docs/configuration-reference", type="component-docs",
-                            system="jme", component="jme-aws-config-service", template="arc42",
+                            system="orders", component="foo-bar-scs", template="arc42",
                             source_format="html", location="8-crosscutting-concepts",
                             topic="configuration-reference", label="Configuration Reference")
 
@@ -54,9 +54,9 @@ class ValidateDocumentationSetsTestCase(unittest.TestCase):
     def validate(self, *documentation_sets, **kwargs):
         return validate_documentation_sets(
             list(documentation_sets) or [MARKDOWN_SET],
-            kwargs.pop("doc_service_url", "https://internal-csp.example.ch/docs"),
-            kwargs.pop("token_uri", "https://internal-csp.example.ch/auth/oauth2/token"),
-            kwargs.pop("client_id", "jme-doc-pipeline"),
+            kwargs.pop("doc_service_url", "https://docs.example.ch"),
+            kwargs.pop("token_uri", "https://auth.example.ch/oauth2/token"),
+            kwargs.pop("client_id", "orders-doc-pipeline"),
             kwargs.pop("client_secret", "a-secret"),
             **kwargs)
 
@@ -67,8 +67,8 @@ class OrchestrationTest(ValidateDocumentationSetsTestCase):
         self.validate(MARKDOWN_SET, HTML_SET)
 
         self.assertEqual(1, self.token.call_count)
-        self.token.assert_called_once_with("https://internal-csp.example.ch/auth/oauth2/token",
-                                           "jme-doc-pipeline", "a-secret")
+        self.token.assert_called_once_with("https://auth.example.ch/oauth2/token",
+                                           "orders-doc-pipeline", "a-secret")
         self.assertEqual(2, self.structure.call_count)
 
     def test_a_markdown_set_is_content_checked(self):
@@ -164,7 +164,7 @@ class ReportTest(ValidateDocumentationSetsTestCase):
     def test_an_accepted_run_reports_one_line_per_set(self):
         report = self.validate(MARKDOWN_SET).report
 
-        self.assertIn("Validating ./docs (system-docs, jme, arc42, markdown)", report)
+        self.assertIn("Validating ./docs (system-docs, orders, arc42, markdown)", report)
         self.assertIn("17 file(s) checked, 1 path(s), 1 ignored - content OK, structure OK", report)
         self.assertIn("Documentation validation passed: 1 documentation set(s).", report)
 

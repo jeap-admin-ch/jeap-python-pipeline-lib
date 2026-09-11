@@ -13,7 +13,7 @@ from dataclasses import dataclass, field, replace
 from typing import List, Optional, Sequence
 
 from .doc_content_validation import ContentReport, validate_documentation_content
-from .doc_path_tree import collect_documentation_paths
+from .doc_path_tree import collect_documentation_paths, documentation_set_root
 from .doc_service_operations import (DocumentationSet, StructureReport,
                                      validate_documentation_structure)
 from .oauth_token import fetch_client_credentials_token
@@ -126,7 +126,7 @@ def validate_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         outcomes.append(_validate_one(documentation_set, doc_service_url, access_token,
                                       working_directory))
 
-    findings = [finding for outcome in outcomes for finding in _findings_of(outcome)]
+    findings = [finding for outcome in outcomes for finding in findings_of(outcome)]
     return DocumentationValidationOutcome(
         sets=outcomes,
         findings=findings,
@@ -138,7 +138,7 @@ def _validate_one(documentation_set: DocumentationSet,
                   access_token: str,
                   working_directory: str) -> SetOutcome:
     """Walk, check and ask, for one documentation set."""
-    root = _root_of(documentation_set.path, working_directory)
+    root = documentation_set_root(documentation_set.path, working_directory)
     paths = collect_documentation_paths(root)
 
     content = None
@@ -152,29 +152,23 @@ def _validate_one(documentation_set: DocumentationSet,
     return replace(outcome, report=format_set_report(outcome, len(paths)))
 
 
-def _root_of(path: str, working_directory: str) -> str:
-    """The folder of a set, relative to what the pipeline checked out."""
-    normalized = str(path).replace("\\", "/")
-    if normalized.startswith("./"):
-        normalized = normalized[2:]
-    if working_directory in (".", "", None):
-        return normalized or "."
-    return f"{working_directory.rstrip('/')}/{normalized}" if normalized else working_directory
-
-
-def format_set_report(outcome: SetOutcome, paths_walked: int) -> str:
+def format_set_report(outcome: SetOutcome, paths_walked: int,
+                      heading: Optional[str] = None) -> str:
     """
     Render the report of one documentation set as the text a workflow prints.
 
     Args:
         outcome (SetOutcome): What both responsibilities said about the set.
         paths_walked (int): How many paths the pipeline found in the folder.
+        heading (str, optional): The line the report opens with. The upload prints the findings of a
+            set the doc service refused in this same layout, and says what it was doing rather than
+            that it was validating.
 
     Returns:
         str: The report, plain text, with nothing specific to a pipeline platform in it.
     """
     documentation_set = outcome.documentation_set
-    lines = [f"Validating {documentation_set.describe()}"]
+    lines = [heading or f"Validating {documentation_set.describe()}"]
 
     if outcome.accepted:
         files = outcome.content.files_checked if outcome.content else 0
@@ -275,8 +269,17 @@ def _wrapped_list(label: str, values: Sequence[str]) -> str:
     return f"{label} " + f"\n{indent}".join(wrapped)
 
 
-def _findings_of(outcome: SetOutcome) -> List[Finding]:
-    """Flatten both reports of one set into the findings a pipeline annotates with."""
+def findings_of(outcome: SetOutcome) -> List[Finding]:
+    """
+    Flatten the reports of one documentation set into the findings a pipeline annotates with.
+
+    Args:
+        outcome (SetOutcome): What was found about the set. The upload builds one carrying only the
+            structure report, so a refused upload annotates the same way a refused validation does.
+
+    Returns:
+        List[Finding]: One finding per problem, each with its code, message, path and line.
+    """
     findings = []
     if outcome.content:
         for finding in outcome.content.findings:

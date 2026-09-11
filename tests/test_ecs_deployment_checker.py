@@ -465,16 +465,16 @@ class TestBuildCloudWatchLogStreamUrl(unittest.TestCase):
     def test_builds_direct_cloudwatch_log_stream_url(self):
         url = build_cloudwatch_log_stream_url(
             'eu-central-2',
-            '/aws/ecs/jme-nivel-process-context-app-service',
-            'jme-nivel-process-context-app-service/'
-            'jme-nivel-process-context-app-service/e7d0615da0574864a734b260147aed77')
+            '/aws/ecs/orders-process-context-app-service',
+            'orders-process-context-app-service/'
+            'orders-process-context-app-service/e7d0615da0574864a734b260147aed77')
 
         self.assertEqual(
             url,
             'https://eu-central-2.console.aws.amazon.com/cloudwatch/home?region=eu-central-2'
             '#logsV2:log-groups/log-group/'
-            '$252Faws$252Fecs$252Fjme-nivel-process-context-app-service/log-events/'
-            'jme-nivel-process-context-app-service$252Fjme-nivel-process-context-app-service'
+            '$252Faws$252Fecs$252Forders-process-context-app-service/log-events/'
+            'orders-process-context-app-service$252Forders-process-context-app-service'
             '$252Fe7d0615da0574864a734b260147aed77')
 
 

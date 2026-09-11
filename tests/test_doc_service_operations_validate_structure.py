@@ -8,9 +8,9 @@ from jeap_pipeline.doc_service_operations import (DocServiceError, DocServiceReq
                                                   DocumentationSet,
                                                   validate_documentation_structure)
 
-DOC_SERVICE_URL = "https://internal-csp.jme-dev.nivel.bazg.admin.ch/docs"
+DOC_SERVICE_URL = "https://docs.example.ch"
 
-DOCUMENTATION_SET = DocumentationSet(path="./docs", type="system-docs", system="jme",
+DOCUMENTATION_SET = DocumentationSet(path="./docs", type="system-docs", system="orders",
                                      template="arc42", source_format="markdown")
 
 ACCEPTED_BODY = {
@@ -128,16 +128,17 @@ class ValidateDocumentationStructureTest(unittest.TestCase):
         with self.assertRaises(DocServiceRequestError) as raised:
             validate_documentation_structure(DOC_SERVICE_URL, "a-token", DOCUMENTATION_SET, [])
 
-        self.assertIn("%jme_@uploads_#write", str(raised.exception))
+        self.assertIn("%orders_@uploads_#write", str(raised.exception))
 
     @patch("jeap_pipeline.doc_service_operations.requests.post")
-    def test_a_413_says_that_the_path_points_at_too_much(self, post):
+    def test_a_413_says_that_the_set_holds_more_files_than_a_set_may(self, post):
         post.return_value = _response(413, {"code": "TOO_MANY_PATHS", "detail": "Too many."})
 
         with self.assertRaises(DocServiceRequestError) as raised:
             validate_documentation_structure(DOC_SERVICE_URL, "a-token", DOCUMENTATION_SET, [])
 
-        self.assertIn("more paths than one validation may", str(raised.exception))
+        self.assertIn("more files than a set may", str(raised.exception))
+        self.assertIn("Too many.", str(raised.exception))
 
     @patch("jeap_pipeline.doc_service_operations.time.sleep")
     @patch("jeap_pipeline.doc_service_operations.requests.post")

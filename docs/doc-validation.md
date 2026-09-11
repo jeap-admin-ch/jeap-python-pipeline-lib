@@ -15,8 +15,8 @@ This module is what prevents that: it validates a repository's documentation **b
 | **Structure**  | in the doc service    | The path tree against the structure template: which chapter folders exist, which extensions they take, and which names the generator writes itself                                                  |
 
 The structure is not checked here on purpose. The rules belong to the structure template - arc42 today - which
-lives in the doc service, and a second implementation of them in every pipeline would be a second thing to keep
-in step. The doc service answers `POST /api/uploads/docs/validation` with a finding per problem, and this
+lives in [the jEAP doc service](https://jeap-admin-ch.github.io/docs/building-blocks/reusable-microservices/jeap-doc-service/), and a second implementation of them in every pipeline would be a second
+thing to keep in step. The doc service answers `POST /api/uploads/docs/validation` with a finding per problem, and this
 module prints what it is told.
 
 ## Calling it
@@ -32,9 +32,9 @@ with open(configuration_file) as configuration:
 
 outcome = validate_documentation_sets(
     documentation_sets,
-    doc_service_url="https://internal-csp.jme-dev.nivel.bazg.admin.ch/docs",
-    token_uri="https://internal-csp.jme-dev.nivel.bazg.admin.ch/jme-nivel-doc-auth-scs/oauth2/token",
-    client_id="jme-doc-pipeline",
+    doc_service_url="https://docs.example.ch",
+    token_uri="https://auth.example.ch/oauth2/token",
+    client_id="orders-doc-pipeline",
     client_secret=client_secret)
 
 print(outcome.report)
@@ -62,8 +62,8 @@ Where that configuration lives is the pipeline's business: it reads the file and
 
 ```json
 {
-  "system": "jme",
-  "component": "jme-aws-config-service",
+  "system": "orders",
+  "component": "foo-bar-scs",
   "docs": [
     {
       "path": "./docs",
@@ -182,6 +182,7 @@ they arrive in `outcome.report` and `outcome.findings`.
 
 ## Related
 
+- [Documentation upload](doc-upload.md) - the step after this one
 - [Modules](modules.md) - the whole public API
-- The jEAP doc service's own pages, `docs/upload-validation.md` and `docs/api.md`, for the structural rules and
-  the endpoint
+- [The jEAP doc service](https://jeap-admin-ch.github.io/docs/building-blocks/reusable-microservices/jeap-doc-service/) -
+  the structural rules an upload is validated against, and the endpoint that answers them

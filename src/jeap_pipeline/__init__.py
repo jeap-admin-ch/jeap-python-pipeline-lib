@@ -33,3 +33,8 @@ from .doc_service_operations import (DocumentationSet, documentation_sets_from_c
                                      DocServiceError, DocServiceRequestError)
 from .doc_validation import (validate_documentation_sets, DocumentationValidationOutcome,
                              SetOutcome, Finding, format_set_report)
+from .doc_upload import (upload_documentation_sets, upload_documentation_bundle,
+                         write_documentation_bundle, upload_id_of, format_set_upload_report,
+                         DocumentationUploadOutcome, SetUploadOutcome, UploadProvenance,
+                         UploadResult, DEFAULT_UPLOAD_TIMEOUT, DEFAULT_IN_PROGRESS_ATTEMPTS,
+                         MAX_RETRY_AFTER_SECONDS)

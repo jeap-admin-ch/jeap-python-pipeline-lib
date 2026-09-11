@@ -6,7 +6,7 @@ import requests
 
 from jeap_pipeline.oauth_token import OAuthTokenError, fetch_client_credentials_token
 
-TOKEN_URI = "https://internal-csp.jme-dev.nivel.bazg.admin.ch/jme-nivel-doc-auth-scs/oauth2/token"
+TOKEN_URI = "https://auth.example.ch/oauth2/token"
 SECRET = "the-very-secret-value"
 
 
@@ -27,11 +27,11 @@ class FetchClientCredentialsTokenTest(unittest.TestCase):
     def test_posts_the_client_credentials_grant_as_form_parameters(self, post):
         post.return_value = _response(200, {"access_token": "a-token"})
 
-        token = fetch_client_credentials_token(TOKEN_URI, "jme-doc-pipeline", SECRET)
+        token = fetch_client_credentials_token(TOKEN_URI, "orders-doc-pipeline", SECRET)
 
         self.assertEqual("a-token", token)
         self.assertEqual(TOKEN_URI, post.call_args[0][0])
-        self.assertEqual({"grant_type": "client_credentials", "client_id": "jme-doc-pipeline",
+        self.assertEqual({"grant_type": "client_credentials", "client_id": "orders-doc-pipeline",
                           "client_secret": SECRET}, post.call_args[1]["data"])
         self.assertEqual((5, 30), post.call_args[1]["timeout"])
 
@@ -50,10 +50,10 @@ class FetchClientCredentialsTokenTest(unittest.TestCase):
         post.return_value = _response(401, text="unauthorized_client")
 
         with self.assertRaises(OAuthTokenError) as raised:
-            fetch_client_credentials_token(TOKEN_URI, "jme-doc-pipeline", SECRET)
+            fetch_client_credentials_token(TOKEN_URI, "orders-doc-pipeline", SECRET)
 
         message = str(raised.exception)
-        self.assertIn("jme-doc-pipeline", message)
+        self.assertIn("orders-doc-pipeline", message)
         self.assertIn("client id and secret pair", message)
         self.assertNotIn(SECRET, message)
 

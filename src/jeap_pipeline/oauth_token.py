@@ -41,7 +41,7 @@ def fetch_client_credentials_token(token_uri: str,
 
     Args:
         token_uri (str): The token endpoint of the authorization server, for instance
-            `https://internal-csp.example.ch/auth-service/oauth2/token`.
+            `https://auth.example.ch/oauth2/token`.
         client_id (str): The client the pipeline authenticates as.
         client_secret (str): The secret of that client. It is never logged and never part of an
             error message.

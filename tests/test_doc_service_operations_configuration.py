@@ -20,15 +20,24 @@ HTML_SET = {
     "label": "Configuration Reference",
 }
 
-SYSTEM = {"system": "jme", "docs": [dict(MARKDOWN_SET, type="system-docs")]}
-COMPONENT = {"system": "jme", "component": "jme-aws-config-service", "docs": [MARKDOWN_SET]}
-LIBRARY = {"system": "jme", "library": "jme-gha-kafka-test-example",
+SYSTEM = {"system": "orders", "docs": [dict(MARKDOWN_SET, type="system-docs")]}
+COMPONENT = {"system": "orders", "component": "foo-bar-scs", "docs": [MARKDOWN_SET]}
+LIBRARY = {"system": "orders", "library": "orders-common-lib",
            "docs": [dict(MARKDOWN_SET, type="library-docs")]}
+
+PROVENANCE = {
+    "source-repository": "https://github.com/example-org/foo-bar-example",
+    "source-revision": "9a1c2f8e5b4d3c2a1908f7e6d5c4b3a291807f6e",
+    "source-ref": "develop",
+    "source-timestamp": "2026-09-11T07:12:00+02:00",
+    "build-url": "https://github.com/example-org/foo-bar-example/actions/runs/1234567890",
+    "generated-at": "2026-09-11T07:15:00+02:00",
+}
 
 
 def _component(*sets, **root):
     """A component configuration carrying the given documentation sets."""
-    return dict({"system": "jme", "component": "jme-aws-config-service", "docs": list(sets)},
+    return dict({"system": "orders", "component": "foo-bar-scs", "docs": list(sets)},
                 **root)
 
 
@@ -47,18 +56,18 @@ class DocumentationSetsFromConfigTest(unittest.TestCase):
         sets = documentation_sets_from_config(_component(MARKDOWN_SET, HTML_SET))
 
         for documentation_set in sets:
-            self.assertEqual("jme", documentation_set.system)
-            self.assertEqual("jme-aws-config-service", documentation_set.component)
+            self.assertEqual("orders", documentation_set.system)
+            self.assertEqual("foo-bar-scs", documentation_set.component)
 
     def test_a_library_set_names_a_library(self):
-        self.assertEqual("jme-gha-kafka-test-example",
+        self.assertEqual("orders-common-lib",
                          documentation_sets_from_config(LIBRARY)[0].library)
 
     def test_the_subject_is_the_component_the_library_or_the_system(self):
-        self.assertEqual("jme", documentation_sets_from_config(SYSTEM)[0].subject)
-        self.assertEqual("jme-aws-config-service",
+        self.assertEqual("orders", documentation_sets_from_config(SYSTEM)[0].subject)
+        self.assertEqual("foo-bar-scs",
                          documentation_sets_from_config(COMPONENT)[0].subject)
-        self.assertEqual("jme-gha-kafka-test-example",
+        self.assertEqual("orders-common-lib",
                          documentation_sets_from_config(LIBRARY)[0].subject)
 
     def test_version_and_site_are_part_of_the_contract_and_belong_to_the_repository(self):
@@ -70,7 +79,7 @@ class DocumentationSetsFromConfigTest(unittest.TestCase):
             self.assertEqual("governance", documentation_set.site)
 
     def test_the_set_describes_itself_for_a_report(self):
-        self.assertEqual("./docs (component-docs, jme-aws-config-service, arc42, markdown)",
+        self.assertEqual("./docs (component-docs, foo-bar-scs, arc42, markdown)",
                          documentation_sets_from_config(COMPONENT)[0].describe())
 
 
@@ -92,7 +101,7 @@ class RootTest(unittest.TestCase):
 
     def test_an_unknown_root_key_is_rejected_naming_the_allowed_ones(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config(_component(MARKDOWN_SET, systen="jme"), "the file")
+            documentation_sets_from_config(_component(MARKDOWN_SET, systen="orders"), "the file")
 
         message = str(raised.exception)
         self.assertIn("'systen'", message)
@@ -109,22 +118,22 @@ class RootTest(unittest.TestCase):
 
     def test_a_configuration_without_docs_is_rejected(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config({"system": "jme"}, "the file")
+            documentation_sets_from_config({"system": "orders"}, "the file")
         self.assertIn("names no 'docs'", str(raised.exception))
 
     def test_docs_that_is_not_a_list_is_rejected(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config({"system": "jme", "docs": MARKDOWN_SET}, "the file")
+            documentation_sets_from_config({"system": "orders", "docs": MARKDOWN_SET}, "the file")
         self.assertIn("has to hold a list", str(raised.exception))
 
     def test_an_empty_docs_is_rejected(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config({"system": "jme", "docs": []}, "the file")
+            documentation_sets_from_config({"system": "orders", "docs": []}, "the file")
         self.assertIn("is empty", str(raised.exception))
 
     def test_a_set_that_is_not_an_object_is_rejected(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config({"system": "jme", "docs": ["./docs"]}, "the file")
+            documentation_sets_from_config({"system": "orders", "docs": ["./docs"]}, "the file")
         self.assertIn("has to be an object", str(raised.exception))
 
 
@@ -151,14 +160,14 @@ class ValueTypeTest(unittest.TestCase):
     def test_a_list_where_a_string_belongs_is_rejected_rather_than_raising(self):
         with self.assertRaises(DocumentationConfigError) as raised:
             documentation_sets_from_config(
-                {"system": "jme", "docs": [dict(MARKDOWN_SET, type=["system-docs"])]})
+                {"system": "orders", "docs": [dict(MARKDOWN_SET, type=["system-docs"])]})
 
         self.assertIn("'type' is a list, not a string", str(raised.exception))
 
     def test_every_key_that_takes_a_string_is_checked(self):
         for key in ("path", "type", "system", "template", "source_format", "component", "library",
                     "location", "topic", "label", "version", "site"):
-            values = dict(path="./docs", type="component-docs", system="jme", template="arc42",
+            values = dict(path="./docs", type="component-docs", system="orders", template="arc42",
                           source_format="markdown", component="a-component")
             values[key] = 1
             with self.assertRaises(DocumentationConfigError, msg=key) as raised:
@@ -183,7 +192,7 @@ class DocumentationSetTest(unittest.TestCase):
         self.assertIn("source-format", message, "the message names the keys that do exist")
 
     def test_a_subject_key_in_a_set_is_rejected_and_told_where_it_belongs(self):
-        for key, value in (("system", "jme"), ("component", "a-component"),
+        for key, value in (("system", "orders"), ("component", "a-component"),
                            ("library", "a-lib"), ("version", "1.0.0"), ("site", "a-site")):
             entry = dict(MARKDOWN_SET)
             entry[key] = value
@@ -219,7 +228,7 @@ class DocumentationSetTest(unittest.TestCase):
 
     def test_a_component_is_required_for_component_docs(self):
         with self.assertRaises(DocumentationConfigError) as raised:
-            documentation_sets_from_config({"system": "jme", "docs": [MARKDOWN_SET]})
+            documentation_sets_from_config({"system": "orders", "docs": [MARKDOWN_SET]})
         self.assertIn("'component' is required for type 'component-docs'", str(raised.exception))
 
     def test_a_component_does_not_belong_to_system_docs(self):
@@ -231,7 +240,7 @@ class DocumentationSetTest(unittest.TestCase):
         # A configuration cannot express this - a root naming both is refused above - so the rule
         # itself is checked on the set.
         with self.assertRaises(DocumentationConfigError) as raised:
-            DocumentationSet(path="./docs", type="component-docs", system="jme",
+            DocumentationSet(path="./docs", type="component-docs", system="orders",
                              component="a-component", library="a-lib", template="arc42",
                              source_format="markdown")
         self.assertIn("'library' does not belong to type 'component-docs'", str(raised.exception))
@@ -239,7 +248,7 @@ class DocumentationSetTest(unittest.TestCase):
     def test_a_root_naming_a_component_and_a_library_is_refused_at_the_root(self):
         # Every set inherits what the root says, so a repository documents one of the two. Refusing
         # it here beats the confusing per-set message it would otherwise produce.
-        configuration = {"system": "jme", "component": "a-component", "library": "a-lib",
+        configuration = {"system": "orders", "component": "a-component", "library": "a-lib",
                          "docs": [MARKDOWN_SET]}
 
         with self.assertRaises(DocumentationConfigError) as raised:
@@ -290,7 +299,7 @@ class DocumentationSetTest(unittest.TestCase):
 
     def test_a_set_built_directly_is_validated_too(self):
         with self.assertRaises(DocumentationConfigError):
-            DocumentationSet(path="./docs", type="system-docs", system="jme", template="arc42",
+            DocumentationSet(path="./docs", type="system-docs", system="orders", template="arc42",
                              source_format="mdx")
 
 
@@ -299,28 +308,28 @@ class ValidationQueryParametersTest(unittest.TestCase):
     def test_system_docs_send_the_four_parameters_the_structure_depends_on(self):
         parameters = documentation_sets_from_config(SYSTEM)[0].validation_query_parameters()
 
-        self.assertEqual({"type": "system-docs", "system": "jme", "template": "arc42",
+        self.assertEqual({"type": "system-docs", "system": "orders", "template": "arc42",
                           "source-format": "markdown"}, parameters)
 
     def test_component_docs_add_the_component(self):
         parameters = documentation_sets_from_config(COMPONENT)[0].validation_query_parameters()
 
-        self.assertEqual({"type": "component-docs", "system": "jme",
-                          "component": "jme-aws-config-service", "template": "arc42",
+        self.assertEqual({"type": "component-docs", "system": "orders",
+                          "component": "foo-bar-scs", "template": "arc42",
                           "source-format": "markdown"}, parameters)
 
     def test_library_docs_add_the_library(self):
         parameters = documentation_sets_from_config(LIBRARY)[0].validation_query_parameters()
 
-        self.assertEqual("jme-gha-kafka-test-example", parameters["library"])
+        self.assertEqual("orders-common-lib", parameters["library"])
         self.assertNotIn("component", parameters)
 
     def test_an_html_set_adds_the_location_and_the_topic_but_not_the_label(self):
         parameters = documentation_sets_from_config(
             _component(HTML_SET))[0].validation_query_parameters()
 
-        self.assertEqual({"type": "component-docs", "system": "jme",
-                          "component": "jme-aws-config-service", "template": "arc42",
+        self.assertEqual({"type": "component-docs", "system": "orders",
+                          "component": "foo-bar-scs", "template": "arc42",
                           "source-format": "html", "location": "8-crosscutting-concepts",
                           "topic": "configuration-reference"}, parameters)
 
@@ -332,6 +341,68 @@ class ValidationQueryParametersTest(unittest.TestCase):
         for refused in ("version", "site", "label", "source-repository", "source-revision",
                         "source-ref", "source-timestamp", "build-url", "generated-at", "path"):
             self.assertNotIn(refused, parameters)
+
+
+class UploadQueryParametersTest(unittest.TestCase):
+
+    def test_system_docs_send_what_the_structure_needs_and_the_provenance(self):
+        parameters = documentation_sets_from_config(SYSTEM)[0].upload_query_parameters(PROVENANCE)
+
+        self.assertEqual(dict({"type": "system-docs", "system": "orders", "template": "arc42",
+                               "source-format": "markdown"}, **PROVENANCE), parameters)
+
+    def test_component_docs_carry_the_version_of_the_component(self):
+        parameters = documentation_sets_from_config(COMPONENT)[0].upload_query_parameters(
+            PROVENANCE, "1.0.0-20260911073000")
+
+        self.assertEqual("1.0.0-20260911073000", parameters["version"])
+        self.assertEqual("foo-bar-scs", parameters["component"])
+
+    def test_library_docs_carry_the_version_of_the_library(self):
+        parameters = documentation_sets_from_config(LIBRARY)[0].upload_query_parameters(
+            PROVENANCE, "1.0.0")
+
+        self.assertEqual("1.0.0", parameters["version"])
+        self.assertEqual("orders-common-lib", parameters["library"])
+
+    def test_the_configured_version_is_sent_when_the_pipeline_resolved_none(self):
+        parameters = documentation_sets_from_config(
+            _component(MARKDOWN_SET, version="1.4.0"))[0].upload_query_parameters(PROVENANCE)
+
+        self.assertEqual("1.4.0", parameters["version"])
+
+    def test_a_component_without_a_version_is_refused_before_the_doc_service_sees_it(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            documentation_sets_from_config(COMPONENT)[0].upload_query_parameters(PROVENANCE)
+
+        self.assertIn("version", str(refused.exception))
+
+    def test_a_system_with_a_version_is_refused_too(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            documentation_sets_from_config(SYSTEM)[0].upload_query_parameters(PROVENANCE, "1.0.0")
+
+        self.assertIn("system documents itself", str(refused.exception))
+
+    def test_an_html_set_adds_its_placement_and_its_label(self):
+        parameters = documentation_sets_from_config(
+            _component(HTML_SET))[0].upload_query_parameters(PROVENANCE, "1.0.0")
+
+        self.assertEqual("8-crosscutting-concepts", parameters["location"])
+        self.assertEqual("configuration-reference", parameters["topic"])
+        self.assertEqual("Configuration Reference", parameters["label"])
+
+    def test_the_site_is_sent_when_the_repository_names_one(self):
+        parameters = documentation_sets_from_config(
+            _component(MARKDOWN_SET, site="governance"))[0].upload_query_parameters(PROVENANCE,
+                                                                                    "1.0.0")
+
+        self.assertEqual("governance", parameters["site"])
+
+    def test_the_folder_of_the_set_is_never_sent(self):
+        parameters = documentation_sets_from_config(COMPONENT)[0].upload_query_parameters(
+            PROVENANCE, "1.0.0")
+
+        self.assertNotIn("path", parameters)
 
 
 if __name__ == "__main__":

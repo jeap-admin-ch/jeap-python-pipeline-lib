@@ -79,13 +79,29 @@ Validate a repository's documentation before it is uploaded - see
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `validate_documentation_sets`                                                                                                                                                                                     | Validate every documentation set of a repository, content and structure, and render the report a pipeline prints.                                                   |
 | `documentation_sets_from_config`                                                                                                                                                                                  | Read a documentation configuration - what the repository documents at its root, its sets under `docs` - into typed sets, applying the rules of the upload contract. |
-| `DocumentationSet`                                                                                                                                                                                                | One folder of documentation and what it is; `validation_query_parameters` selects what a structure validation may send.                                             |
+| `DocumentationSet`                                                                                                                                                                                                | One folder of documentation and what it is; `validation_query_parameters` and `upload_query_parameters` select what each request may send.                          |
 | `validate_documentation_content`                                                                                                                                                                                  | The pipeline's responsibility: encoding, CommonMark, front matter allowlist, links that resolve.                                                                    |
 | `collect_documentation_paths`                                                                                                                                                                                     | Walk a documentation folder into the relative path tree an upload would carry.                                                                                      |
 | `validate_documentation_structure`                                                                                                                                                                                | Ask the doc service whether a path tree would be accepted, with retries on a server error.                                                                          |
 | `DocumentationValidationOutcome`, `SetOutcome`, `Finding`, `ContentReport`, `ContentFinding`, `StructureReport`, `StructureFinding`                                                                               | Result dataclasses.                                                                                                                                                 |
 | `ContentFindingCode`, `StructureFindingCode`, `ALLOWED_FRONT_MATTER_KEYS`, `CONFIGURATION_ROOT_KEYS`, `DOCUMENTATION_SET_KEYS`, `SUBJECT_KEYS`, `DOCUMENTATION_SETS_KEY`, `DOCUMENTATION_TYPES`, `SOURCE_FORMATS` | What the checks branch on, and what is allowed.                                                                                                                     |
 | `DocumentationConfigError`, `DocumentationPathError`, `DocServiceError`, `DocServiceRequestError`                                                                                                                 | Errors.                                                                                                                                                             |
+
+## Documentation upload (jEAP doc service)
+
+Upload a repository's documentation to the doc service - see [Documentation upload](doc-upload.md) for the
+bundle, the idempotency key and the answers.
+
+| Symbol                                                                              | Purpose                                                                                                                        |
+|-------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `upload_documentation_sets`                                                         | Upload the documentation sets of a repository and render the report a pipeline prints.                                         |
+| `UploadProvenance`                                                                  | Where an uploaded set comes from: the repository, the commit, the ref, its timestamp, and the run that uploaded it.            |
+| `upload_documentation_bundle`                                                       | Send one ZIP with its prepared query parameters and read the answer, with the retries a restart and a concurrent attempt need. |
+| `write_documentation_bundle`                                                        | Write the ZIP of one set, holding exactly the walked paths under their set-relative names.                                     |
+| `upload_id_of`                                                                      | The idempotency key of a set's upload, derived from the identity of the run so a retry repeats it and a re-run does not.       |
+| `format_set_upload_report`                                                          | Render what became of one set as the text a workflow prints.                                                                   |
+| `DocumentationUploadOutcome`, `SetUploadOutcome`, `UploadResult`                    | Result dataclasses. The outcome carries `findings`, the refused sets flattened the way a validation flattens its own.          |
+| `DEFAULT_UPLOAD_TIMEOUT`, `DEFAULT_IN_PROGRESS_ATTEMPTS`, `MAX_RETRY_AFTER_SECONDS` | The defaults an upload can be given instead, and the cap on a `Retry-After`.                                                   |
 
 ## OAuth 2.0 tokens
 
@@ -99,3 +115,4 @@ Validate a repository's documentation before it is uploaded - see
 - [Getting started](getting-started.md)
 - [ECS deployment checks](ecs-deployment.md)
 - [Documentation validation](doc-validation.md)
+- [Documentation upload](doc-upload.md)

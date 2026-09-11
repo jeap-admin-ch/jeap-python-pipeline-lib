@@ -69,12 +69,22 @@ class DocServiceError(RuntimeError):
 
 
 class DocServiceRequestError(DocServiceError):
-    """Raised when the doc service refuses the request itself - a wrong parameter, or no permission."""
+    """
+    Raised when the doc service refuses the request itself - a wrong parameter, or no permission.
+
+    `report` carries the findings of the one refusal that is about the documentation rather than
+    about the request: a set that would not be published as it is. It is `None` for every other
+    refusal, so a caller can branch on it without asking which endpoint answered.
+    """
+
+    def __init__(self, message: str, report: Optional["StructureReport"] = None):
+        super().__init__(message)
+        self.report = report
 
 
 class StructureFindingCode(str, Enum):
     """
-    The finding codes of the doc service's structure validation, as of doc service 1.4.0.
+    The finding codes of the doc service's structure validation that are known here.
 
     They are the doc service's API, and a pipeline that prints a message per code branches on them.
     A `StructureFinding` carries its code as a plain string, so a code a newer doc service invented
@@ -206,6 +216,56 @@ class DocumentationSet:
             parameters["topic"] = self.topic
         return parameters
 
+    def upload_query_parameters(self,
+                                provenance: Dict[str, str],
+                                version: Optional[str] = None) -> Dict[str, str]:
+        """
+        The query parameters of an upload - what the set is, plus where it comes from.
+
+        An upload says everything a validation says and four things more: which commit of which
+        repository the documents were taken from, which version of the component or library they
+        document, and which site they belong to. The label of an HTML microsite belongs here too,
+        because a menu label is not part of a path tree.
+
+        Args:
+            provenance (dict): The commit and the run the documentation comes from, keyed as the
+                endpoint names them - `source-repository`, `source-revision`, `source-ref`,
+                `source-timestamp`, and optionally `build-url` and `generated-at`.
+            version (str, optional): The version of the component or library the set documents.
+                Without it the `version` of the documentation configuration is sent, which is where
+                a repository states one explicitly.
+
+        Raises:
+            DocumentationConfigError: If a component's or library's documentation is uploaded
+                without a version, or a system's with one. The doc service would answer `400`, and
+                a pipeline should say which of its own inputs is missing instead.
+
+        Returns:
+            Dict[str, str]: The query parameters, keyed as the endpoint names them.
+        """
+        parameters = self.validation_query_parameters()
+        if self.site:
+            parameters["site"] = self.site
+        if self.source_format == "html":
+            parameters["label"] = self.label
+
+        version = version or self.version
+        if self.type in ("component-docs", "library-docs"):
+            if not version:
+                raise DocumentationConfigError(
+                    f"The documentation of the {self.type.split('-')[0]} "
+                    f"'{self.subject}' is uploaded with the version of what it documents, and "
+                    f"none was resolved. State 'version' at the root of the documentation "
+                    f"configuration, or let the pipeline read it from the repository.")
+            parameters["version"] = version
+        elif version:
+            raise DocumentationConfigError(
+                f"A version was given for the documentation of the system '{self.system}'. A "
+                f"system documents itself; there is no version of a system to name.")
+
+        parameters.update(provenance)
+        return parameters
+
 
 @dataclass(frozen=True)
 class StructureFinding:
@@ -242,8 +302,8 @@ def documentation_sets_from_config(configuration: Any,
 
     ```json
     {
-      "system": "jme",
-      "component": "jme-aws-config-service",
+      "system": "orders",
+      "component": "foo-bar-scs",
       "docs": [
         {"path": "./docs", "type": "component-docs", "template": "arc42",
          "source-format": "markdown"}
@@ -332,7 +392,7 @@ def validate_documentation_structure(doc_service_url: str,
 
     Args:
         doc_service_url (str): The doc service, origin plus context path and no trailing slash, for
-            instance `https://internal-csp.example.ch/docs`.
+            instance `https://docs.example.ch`.
         access_token (str): A bearer token of a client holding
             `<system-name>_%<system>_@uploads_#write` for the system of the set.
         documentation_set (DocumentationSet): The set whose tree is being validated.
@@ -375,11 +435,11 @@ def validate_documentation_structure(doc_service_url: str,
             continue
 
         if response.status_code in (200, 422):
-            return _report_of(response, documentation_set)
+            return read_structure_report(response, documentation_set)
         if response.status_code < 500:
             raise DocServiceRequestError(_request_error_message(response, documentation_set, url))
 
-        last_error = f"status {response.status_code}: {_first_line(response.text)}"
+        last_error = f"status {response.status_code}: {first_line(response.text)}"
         print(f"Attempt {attempt} of {attempts} was answered with {last_error}")
         if attempt < attempts:
             time.sleep(backoff_seconds)
@@ -389,49 +449,73 @@ def validate_documentation_structure(doc_service_url: str,
         f"{documentation_set.path} in {attempts} attempt(s). Last: {last_error}")
 
 
-def _report_of(response, documentation_set: DocumentationSet) -> StructureReport:
-    """Read a `200` or a `422` into a report."""
+def read_structure_report(response,
+                          documentation_set: DocumentationSet,
+                          accepted: Optional[bool] = None,
+                          what: str = "structure validation") -> StructureReport:
+    """
+    Read the report the doc service answers a path tree with.
+
+    Shared with the upload, which is refused with the same report in the same members when a set
+    would not be published as it is - so a pipeline prints the findings without having to know which
+    of the two endpoints answered.
+
+    Args:
+        response: The answer of the doc service.
+        documentation_set (DocumentationSet): The set the answer is about, for the error messages.
+        accepted (bool, optional): Whether the answer is the accepting one. By default the status
+            line decides, which is what it does on the validation endpoint.
+        what (str, optional): What was being done, for the error messages - an unreadable answer to
+            an upload must not be reported as a failed validation that never ran.
+
+    Raises:
+        DocServiceError: If the answer is not the report it has to be.
+
+    Returns:
+        StructureReport: The report.
+    """
     try:
         answer = response.json()
     except ValueError:
         raise DocServiceError(
-            f"The doc service answered the structure validation of {documentation_set.path} with "
-            f"status {response.status_code} and something that is not JSON: "
-            f"{_first_line(response.text)}") from None
+            f"The doc service answered the {what} of {documentation_set.path} with status "
+            f"{response.status_code} and something that is not JSON: "
+            f"{first_line(response.text)}") from None
 
     if not isinstance(answer, dict):
         raise DocServiceError(
-            f"The doc service answered the structure validation of {documentation_set.path} with "
-            f"status {response.status_code} and JSON that is not an object: "
-            f"{_first_line(response.text)}")
+            f"The doc service answered the {what} of {documentation_set.path} with status "
+            f"{response.status_code} and JSON that is not an object: {first_line(response.text)}")
 
     return StructureReport(
-        accepted=response.status_code == 200,
+        accepted=response.status_code == 200 if accepted is None else accepted,
         template=answer.get("template"),
-        paths_checked=_count_in(answer, "pathsChecked", documentation_set),
-        paths_ignored=_count_in(answer, "pathsIgnored", documentation_set),
+        paths_checked=_count_in(answer, "pathsChecked", documentation_set, what),
+        paths_ignored=_count_in(answer, "pathsIgnored", documentation_set, what),
         allowed_folders=_strings_in(answer, "allowedFolders"),
         allowed_extensions=_strings_in(answer, "allowedExtensions"),
-        findings=_findings_in(answer, documentation_set),
-        findings_omitted=_count_in(answer, "findingsOmitted", documentation_set),
+        findings=_findings_in(answer, documentation_set, what),
+        findings_omitted=_count_in(answer, "findingsOmitted", documentation_set, what),
         detail=answer.get("detail"))
 
 
 def _findings_in(answer: Dict[str, Any],
-                 documentation_set: DocumentationSet) -> List[StructureFinding]:
+                 documentation_set: DocumentationSet,
+                 what: str) -> List[StructureFinding]:
     """The findings of an answer. A finding this library cannot read is not one it may drop."""
     findings = answer.get("findings") or []
     if not isinstance(findings, list) or any(not isinstance(finding, dict) for finding in findings):
         raise DocServiceError(
-            f"The doc service answered the structure validation of {documentation_set.path} with a "
-            f"'findings' that is not a list of objects: {_first_line(str(findings))}")
+            f"The doc service answered the {what} of {documentation_set.path} with a 'findings' "
+            f"that is not a list of objects: {first_line(str(findings))}")
     return [StructureFinding(code=str(finding.get("code", "")),
                              message=str(finding.get("message", "")),
                              path=finding.get("path"))
             for finding in findings]
 
 
-def _count_in(answer: Dict[str, Any], key: str, documentation_set: DocumentationSet) -> int:
+def _count_in(answer: Dict[str, Any], key: str, documentation_set: DocumentationSet,
+              what: str) -> int:
     """A count of an answer, which has to be one: a report saying the wrong number says nothing."""
     value = answer.get(key)
     if value is None:
@@ -440,8 +524,8 @@ def _count_in(answer: Dict[str, Any], key: str, documentation_set: Documentation
         return int(value)
     except (TypeError, ValueError):
         raise DocServiceError(
-            f"The doc service answered the structure validation of {documentation_set.path} with a "
-            f"'{key}' that is not a number: {value!r}") from None
+            f"The doc service answered the {what} of {documentation_set.path} with a '{key}' that "
+            f"is not a number: {value!r}") from None
 
 
 def _strings_in(answer: Dict[str, Any], key: str) -> List[str]:
@@ -459,8 +543,28 @@ def _strings_in(answer: Dict[str, Any], key: str) -> List[str]:
 
 def _request_error_message(response, documentation_set: DocumentationSet, url: str) -> str:
     """Say what the doc service refused, and what that means for the configuration."""
-    code, detail = _problem_of(response)
-    hints = {
+    code, detail = problem_of(response)
+    hint = refusal_hint(response.status_code, documentation_set)
+    return (f"The doc service at {url} refused the structure validation of "
+            f"{documentation_set.path} with status {response.status_code}"
+            f"{f' ({code})' if code else ''}. {hint} {detail}".strip())
+
+
+def refusal_hint(status_code: int, documentation_set: DocumentationSet) -> str:
+    """
+    What a refused request means for the configuration, by status.
+
+    Both endpoints below `/api/uploads/docs` answer a wrong request the same way, so what a status
+    means to the team that sent it is said once.
+
+    Args:
+        status_code (int): The status the doc service answered with.
+        documentation_set (DocumentationSet): The set the request was about.
+
+    Returns:
+        str: The hint, or an empty string for a status that carries none.
+    """
+    return {
         400: "The documentation configuration carries a parameter this endpoint does not accept, "
              "or a value that is not one it knows.",
         401: "The request carried no usable token.",
@@ -468,27 +572,33 @@ def _request_error_message(response, documentation_set: DocumentationSet, url: s
              f"'{documentation_set.system}'. It needs the role "
              f"<system-name>_%{documentation_set.system}_@uploads_#write.",
         411: "The request was sent without a content length.",
-        413: f"The documentation set carries more paths than one validation may - "
-             f"'{documentation_set.path}' is pointing at more than the documentation.",
-    }
-    hint = hints.get(response.status_code, "")
-    return (f"The doc service at {url} refused the structure validation of "
-            f"{documentation_set.path} with status {response.status_code}"
-            f"{f' ({code})' if code else ''}. {hint} {detail}".strip())
+        413: f"The documentation set holds more files than a set may - the doc service names the "
+             f"limit in its answer. Either '{documentation_set.path}' points at more than the "
+             f"documentation, or the set has to be split.",
+        415: "The body was not sent in the media type the endpoint takes.",
+    }.get(status_code, "")
 
 
-def _problem_of(response) -> Tuple[Optional[str], str]:
-    """The `code` and the `detail` of an RFC 9457 problem document, if the answer is one."""
+def problem_of(response) -> Tuple[Optional[str], str]:
+    """
+    The `code` and the `detail` of an RFC 9457 problem document, if the answer is one.
+
+    Args:
+        response: The answer of the doc service.
+
+    Returns:
+        Tuple[Optional[str], str]: The machine-readable code, and the detail or the body.
+    """
     try:
         problem = response.json()
     except ValueError:
-        return None, _first_line(response.text)
+        return None, first_line(response.text)
     if not isinstance(problem, dict):
-        return None, _first_line(response.text)
-    return problem.get("code"), str(problem.get("detail") or _first_line(response.text))
+        return None, first_line(response.text)
+    return problem.get("code"), str(problem.get("detail") or first_line(response.text))
 
 
-def _first_line(text: str, limit: int = 500) -> str:
+def first_line(text: str, limit: int = 500) -> str:
     """Return the answer of a server in one line, short enough to belong in an error message."""
     if not text:
         return "<empty body>"
