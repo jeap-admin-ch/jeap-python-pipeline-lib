@@ -24,6 +24,9 @@ from .doc_path_tree import collect_documentation_paths, DocumentationPathError
 from .doc_content_validation import (validate_documentation_content, ContentReport, ContentFinding,
                                      ContentFindingCode, ALLOWED_FRONT_MATTER_KEYS,
                                      DEFAULT_MAX_FINDINGS)
+from .doc_publish_branches import (publishes_from, publish_branches_of, branch_matches,
+                                   PublicationDecision, PUBLISH_BRANCHES_KEY,
+                                   RULE_DEFAULT_BRANCH, RULE_PUBLISH_BRANCHES, RULE_TAG)
 from .doc_service_operations import (DocumentationSet, documentation_sets_from_config,
                                      validate_documentation_structure, StructureReport,
                                      StructureFinding, StructureFindingCode, CONFIGURATION_ROOT_KEYS,

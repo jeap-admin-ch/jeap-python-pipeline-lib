@@ -80,6 +80,72 @@ none is refused here rather than by the doc service, so the message names the pi
 a `versions` entry for a `system-docs` set, which has no version to name. Both are refused **before** the first
 upload, as is a folder that is not there, so a run either publishes every set or none.
 
+## Which branches publish
+
+Every push is validated; not every push publishes. Which branches do is a property of the **repository**, so
+`publish-branches` holds one list of branch patterns at the root of the documentation configuration, beside
+what the repository documents - `["master", "feature/E2E-Test-*"]`, for instance. Where that configuration
+lives and how it is read is the pipeline's business; `publish_branches_of` takes the parsed object.
+
+**This module decides; the pipeline supplies.** What was pushed and what the repository's default branch is
+are arguments, so where a platform keeps them - a workflow context, a task parameter, a variable - never
+reaches this library, and the same list of patterns means the same thing wherever the pipeline runs.
+
+So a pipeline asks:
+
+```python
+from jeap_pipeline import publish_branches_of, publishes_from
+
+decision = publishes_from(ref, publish_branches_of(configuration), default_branch)
+print(decision.reason)
+if decision.publishes:
+    outcome = upload_documentation_sets(...)
+```
+
+| The configuration                | Publishes from                                                               |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| no `publish-branches`            | the repository's default branch, and nothing else                            |
+| `publish-branches` with patterns | **only** the branches those patterns match                                   |
+| `publish-branches: []`           | a configuration error - turning publication off is the pipeline's own switch |
+
+**Stating patterns switches the default-branch rule off** rather than adding to it. A rule that is partly
+implicit is the one a reader gets wrong: with an additive rule `["release/*"]` would go on publishing from the
+default branch too, which is the opposite of what someone writing that list means. A repository that wants both
+says both.
+
+`decision` carries `publishes`, the `branch` it decided about, which `rule` decided - `default-branch`,
+`publish-branches` or `tag` - the `pattern` that matched, and a `reason` to print. A run that publishes nothing
+has to say why, or the next question is why the site did not change.
+
+### The pattern syntax
+
+A pattern is a **branch glob** - the semantics a push filter of a hosted pipeline gives the same list, so a
+list written for one reads the same here:
+
+| Pattern              | Matches                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| `master`             | exactly that branch                                                        |
+| `release/*`          | `release/1.2`, but **not** `release/1.2/hotfix` - `*` does not cross a `/` |
+| `feature/**`         | every branch below `feature/`, however deep                                |
+| `feature/E2E-Test-*` | the branches whose names start that way                                    |
+| `maste?`             | `master` - `?` is one character that is not a `/`                          |
+
+A **branch name** is matched, never a ref, so `refs/heads/` belongs in no pattern. `publishes_from` takes either
+form and strips the prefix, and it recognises a tag when it is given a full ref: **a tag publishes nothing**,
+because documentation belongs to a line of development rather than to a release artifact. Pass the full ref
+where the pipeline has one, so a tag is not mistaken for a branch of the same name.
+
+### What a wide pattern means
+
+**The doc service has no branch dimension.** A set replaces its predecessor under the same key - the subject,
+the source format and the template - so whichever branch uploaded last is what the site shows, with its
+`source-ref` and its commit rendered under every page.
+
+Patterns therefore decide **who may overwrite the documentation of a system**, and a wide one is a real
+decision: a repository with `feature/**` publishes whatever anybody pushes, and the site shows the last push
+until the next one. Nothing in the library refuses such a pattern - what a team's branches mean is not
+something a pipeline can guess - so it is a question for a review of the configuration.
+
 ## Idempotency: the upload id
 
 `uploadId` is the idempotency key of the doc service's API: one id is one upload, and repeating a `PUT` under it
