@@ -7,6 +7,28 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.9.0] - 2026-09-15
+
+### Added
+
+- **The documentation a build generates can be read from a pipeline configuration of its own.**
+  `documentation_sets_from_entries` takes a list in which every entry names its own subject - one
+  build can generate the documentation of a component and of a library beside it - and refuses what
+  a build may not state: a `version`, which the pipeline knows from what it built, a `site` and the
+  branches that publish. A caller says which source formats it uploads, so a pipeline that publishes
+  a folder without looking at its content is not handed Markdown; two entries that would publish
+  over one another are refused naming both.
+- `upload_query_parameters` and `upload_documentation_sets` take a `version_source`, the sentence
+  that says where a missing version should come from - the input of a build step rather than the
+  documentation configuration.
+
+### Changed
+
+- **An upload id is derived from the identity of a documentation set**, not from its folder alone:
+  its type, subject, source format, location, topic and path. One run can upload one folder as two
+  sets, and two workflows of one run share the run and the attempt, so two uploads would otherwise
+  have been taken for a retry of one another. A retry of one upload still repeats its id.
+
 ## [1.8.0] - 2026-09-11
 
 ### Added

@@ -59,6 +59,9 @@ its configuration through instead of translating it.
 
 Where that configuration lives is the pipeline's business: it reads the file and hands the parsed JSON to
 `documentation_sets_from_config`, which applies the rules below and gives back typed documentation sets.
+Documentation a build generates is declared in the pipeline configuration of the build instead and read with
+`documentation_sets_from_entries` - see [Documentation upload](doc-upload.md#documentation-a-build-generates);
+the checks of a set are the same ones.
 
 ```json
 {

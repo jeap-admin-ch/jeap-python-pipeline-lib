@@ -1,7 +1,8 @@
 import unittest
 
 from jeap_pipeline.doc_service_operations import (DocumentationConfigError, DocumentationSet,
-                                                  documentation_sets_from_config)
+                                                  documentation_sets_from_config,
+                                                  documentation_sets_from_entries)
 
 MARKDOWN_SET = {
     "path": "./docs",
@@ -421,6 +422,151 @@ class UploadQueryParametersTest(unittest.TestCase):
             PROVENANCE, "1.0.0")
 
         self.assertNotIn("path", parameters)
+
+
+GENERATED_ENTRY = {
+    "path": "./target/reports/apidocs",
+    "type": "component-docs",
+    "system": "orders",
+    "component": "foo-bar-scs",
+    "template": "arc42",
+    "source-format": "html",
+    "location": "5-building-block-view",
+    "topic": "javadoc",
+    "label": "Javadoc",
+}
+
+
+def _generated(*entries, source_formats=frozenset({"html"})):
+    """Read entries of generated documentation the way a build pipeline reads them."""
+    return documentation_sets_from_entries(list(entries), "the build configuration",
+                                           "generated-docs", source_formats)
+
+
+class DocumentationSetsFromEntriesTest(unittest.TestCase):
+    """The documentation a build generates: a list, and every entry names what it is about."""
+
+    def test_an_entry_names_its_own_subject(self):
+        component, library = _generated(
+            GENERATED_ENTRY,
+            dict(GENERATED_ENTRY, type="library-docs", library="orders-common-lib",
+                 component=None, topic="library-javadoc"))
+
+        self.assertEqual("foo-bar-scs", component.component)
+        self.assertEqual("orders", component.system)
+        self.assertEqual("orders-common-lib", library.library)
+
+    def test_a_system_report_needs_no_subject_beside_the_system(self):
+        report, = _generated(dict(GENERATED_ENTRY, type="system-docs", component=None,
+                                  location="10-quality-requirements", topic="system-test-report"))
+
+        self.assertEqual("orders", report.subject)
+
+    def test_the_entries_keep_the_order_they_are_configured_in(self):
+        first, second = _generated(GENERATED_ENTRY, dict(GENERATED_ENTRY, topic="rest-docs"))
+
+        self.assertEqual("javadoc", first.topic)
+        self.assertEqual("rest-docs", second.topic)
+
+    def test_a_version_belongs_to_the_pipeline_that_built_it(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated(dict(GENERATED_ENTRY, version="1.0.0"))
+
+        self.assertIn("'version' is not stated here", str(refused.exception))
+
+    def test_a_site_and_the_branches_are_not_an_entry_of_the_list(self):
+        for key, value in (("site", "governance"), ("publish-branches", ["master"])):
+            with self.subTest(key=key):
+                with self.assertRaises(DocumentationConfigError) as refused:
+                    _generated(dict(GENERATED_ENTRY, **{key: value}))
+
+                self.assertIn(f"'{key}' is not stated here", str(refused.exception))
+
+    def test_an_unknown_key_is_refused_with_the_allowed_ones(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated(dict(GENERATED_ENTRY, topci="javadoc"))
+
+        self.assertIn("'topci'", str(refused.exception))
+        self.assertIn("topic", str(refused.exception))
+
+    def test_a_format_the_pipeline_does_not_upload_is_refused(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated({"path": "./target/generated-docs", "type": "system-docs",
+                        "system": "orders", "template": "arc42", "source-format": "markdown"})
+
+        self.assertIn("this pipeline uploads html", str(refused.exception))
+        self.assertIn("documentation configuration", str(refused.exception))
+
+    def test_every_format_is_read_when_the_caller_allows_every_format(self):
+        markdown, = documentation_sets_from_entries(
+            [{"path": "./target/generated-docs", "type": "system-docs", "system": "orders",
+              "template": "arc42", "source-format": "markdown"}], "the build configuration")
+
+        self.assertEqual("markdown", markdown.source_format)
+
+    def test_two_entries_of_one_place_are_refused(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated(GENERATED_ENTRY, dict(GENERATED_ENTRY, path="./target/site/apidocs"))
+
+        self.assertIn("[0] and [1]", str(refused.exception))
+        self.assertIn("javadoc", str(refused.exception))
+
+    def test_one_folder_may_be_published_under_two_topics(self):
+        first, second = _generated(GENERATED_ENTRY, dict(GENERATED_ENTRY, topic="rest-docs"))
+
+        self.assertEqual(first.path, second.path)
+
+    def test_a_message_names_the_index_of_the_entry_it_is_about(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated(GENERATED_ENTRY, dict(GENERATED_ENTRY, topic="Not A Slug"))
+
+        self.assertIn("generated-docs[1]", str(refused.exception))
+
+    def test_a_list_that_is_no_list_is_refused(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            documentation_sets_from_entries(GENERATED_ENTRY, "the build configuration")
+
+        self.assertIn("has to hold a list", str(refused.exception))
+
+    def test_an_empty_list_is_refused(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated()
+
+        self.assertIn("is empty", str(refused.exception))
+
+    def test_an_entry_that_is_no_object_is_refused(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated("./target/reports/apidocs")
+
+        self.assertIn("has to be an object", str(refused.exception))
+
+    def test_a_required_key_is_still_required(self):
+        with self.assertRaises(DocumentationConfigError) as refused:
+            _generated({key: value for key, value in GENERATED_ENTRY.items() if key != "template"})
+
+        self.assertIn("template", str(refused.exception))
+
+
+class GeneratedVersionMessageTest(unittest.TestCase):
+    """A build says where its version comes from, and the refusal says so too."""
+
+    def test_the_caller_says_where_the_version_comes_from(self):
+        generated, = _generated(GENERATED_ENTRY)
+
+        with self.assertRaises(DocumentationConfigError) as refused:
+            generated.upload_query_parameters(
+                PROVENANCE, version_source="Set the 'version' input of the workflow step.")
+
+        self.assertIn("Set the 'version' input of the workflow step.", str(refused.exception))
+        self.assertNotIn("documentation configuration", str(refused.exception))
+
+    def test_without_one_the_documentation_configuration_is_named(self):
+        generated, = _generated(GENERATED_ENTRY)
+
+        with self.assertRaises(DocumentationConfigError) as refused:
+            generated.upload_query_parameters(PROVENANCE)
+
+        self.assertIn("documentation configuration", str(refused.exception))
 
 
 if __name__ == "__main__":

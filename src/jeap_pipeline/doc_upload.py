@@ -185,6 +185,7 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
                               client_secret: str,
                               provenance: UploadProvenance,
                               versions: Optional[Dict[str, str]] = None,
+                              version_source: Optional[str] = None,
                               upload_id_seed: Optional[str] = None,
                               working_directory: str = ".") -> DocumentationUploadOutcome:
     """
@@ -213,6 +214,8 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         versions (dict, optional): The version to send per documentation set, keyed by the set's
             `path`. A component's and a library's documentation carries the version of what it
             documents; a system's carries none, and an entry for a `system-docs` set is refused.
+        version_source (str, optional): Where the version is expected to come from, for the error
+            message when a set that needs one has none - the input of a build step, say.
         upload_id_seed (str, optional): What the upload ids are derived from - the identity of this
             run, so that a retry repeats an id and a re-run does not. Without it every set gets a
             random id, which is right for a caller that has no run identity. An attempt that repeats
@@ -234,8 +237,8 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         DocumentationUploadOutcome: The per-set outcomes, their findings and the rendered report.
     """
     prepared = [_prepare(documentation_set, provenance,
-                         (versions or {}).get(documentation_set.path), upload_id_seed,
-                         working_directory)
+                         (versions or {}).get(documentation_set.path), version_source,
+                         upload_id_seed, working_directory)
                 for documentation_set in documentation_sets]
 
     access_token = fetch_client_credentials_token(token_uri, client_id, client_secret)
@@ -273,7 +276,23 @@ def upload_id_of(documentation_set: DocumentationSet, upload_id_seed: Optional[s
     """
     if not upload_id_seed:
         return str(uuid.uuid4())
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{upload_id_seed}/{documentation_set.path}"))
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"{upload_id_seed}/{_identity_of(documentation_set)}"))
+
+
+def _identity_of(documentation_set: DocumentationSet) -> str:
+    """
+    What makes one upload of a run a different one from the next.
+
+    The folder alone does not: one run can upload one folder as two sets - a Markdown one and the
+    microsite a build generated beside it - and two workflows of one run share the run and the
+    attempt. Two uploads sharing an id would be taken for a retry of one another.
+    """
+    return "/".join(value or "" for value in (documentation_set.type,
+                                              documentation_set.subject,
+                                              documentation_set.source_format,
+                                              documentation_set.location,
+                                              documentation_set.topic,
+                                              documentation_set.path))
 
 
 def upload_documentation_bundle(doc_service_url: str,
@@ -427,6 +446,7 @@ def format_set_upload_report(outcome: SetUploadOutcome) -> str:
 def _prepare(documentation_set: DocumentationSet,
              provenance: UploadProvenance,
              version: Optional[str],
+             version_source: Optional[str],
              upload_id_seed: Optional[str],
              working_directory: str) -> Tuple[DocumentationSet, Dict[str, str], str, str, List[str]]:
     """
@@ -437,7 +457,8 @@ def _prepare(documentation_set: DocumentationSet,
     """
     root = documentation_set_root(documentation_set.path, working_directory)
     return (documentation_set,
-            documentation_set.upload_query_parameters(provenance.query_parameters(), version),
+            documentation_set.upload_query_parameters(provenance.query_parameters(), version,
+                                                      version_source),
             upload_id_of(documentation_set, upload_id_seed),
             root,
             collect_documentation_paths(root))
