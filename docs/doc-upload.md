@@ -57,6 +57,60 @@ The archive holds exactly the files [`collect_documentation_paths`](doc-validati
 they have inside the set: the folder inside the archive is the chapter folder the doc service sorts the pages
 into, so what was validated is what is uploaded.
 
+## Documentation a build generates
+
+A folder a build writes - Javadoc, Spring REST Docs, a test report - is declared in the pipeline configuration of
+the build rather than in the documentation configuration of the repository: it does not exist until the build has
+run, so only the build can upload it. `documentation_sets_from_entries` reads such a list:
+
+```python
+from jeap_pipeline import documentation_sets_from_entries
+
+documentation_sets = documentation_sets_from_entries(
+    configuration.get("generated-docs"), configuration_file, "generated-docs", {"html"})
+```
+
+```json
+"generated-docs": [
+  {
+    "path": "./target/reports/apidocs",
+    "type": "component-docs",
+    "system": "orders",
+    "component": "foo-bar-scs",
+    "template": "arc42",
+    "source-format": "html",
+    "location": "5-building-block-view",
+    "topic": "javadoc",
+    "label": "Javadoc"
+  }
+]
+```
+
+Three differences to the documentation configuration, all of them because a build is not a subject the way a
+documentation repository is:
+
+- **Every entry names what it is about** - `system`, and the `component` or `library`. One build can generate the
+  documentation of a component and of a library it publishes beside it.
+- **`version`, `site` and `publish-branches` are refused in an entry.** The version of what a build generated is
+  the pipeline's to send, from what it just built; a build chooses no site; and which runs publish is a switch of
+  the pipeline, not of one folder in it.
+- **The caller says which formats it uploads.** A pipeline that publishes a folder without looking at its content
+  passes `{"html"}`, so Markdown - whose content the validation checks page by page - is refused with a message
+  pointing at the documentation configuration.
+
+Two entries that would end up in the same place - the same subject, `location` and `topic` - are refused naming
+both indexes, because the doc service keeps one set per place and the two would replace each other on every run.
+
+A set that needs a version and has none is refused before anything is sent. Pass `version_source` to say where
+the version should have come from:
+
+```python
+outcome = upload_documentation_sets(
+    documentation_sets, ...,
+    versions={"./target/reports/apidocs": artifact_version},
+    version_source="Set the 'version' input of the workflow step.")
+```
+
 ## What an upload says about itself
 
 The query parameters are the keys of the documentation configuration, so a pipeline passes its configuration
@@ -159,6 +213,10 @@ upload_id_seed=f"{repository}/{run_id}/{run_attempt}"
 
 Every attempt of one run sends the same id, a re-run sends a new one. Without a seed each set gets a random id,
 which is right for a caller that cannot say which run it is.
+
+The id is derived from the seed and the **identity of the set** - its type, subject, source format, location,
+topic and path - rather than from the folder alone: one run can upload one folder as two sets, and two workflows
+of one run share the run and the attempt, so two uploads would otherwise be taken for a retry of one another.
 
 **An attempt that repeats an id repeats the whole provenance with it.** The doc service compares everything an
 upload says about itself, `generated-at` and `build-url` included, and answers `UPLOAD_ID_CONFLICT` when

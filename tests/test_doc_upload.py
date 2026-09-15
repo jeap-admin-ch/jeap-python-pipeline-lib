@@ -143,6 +143,56 @@ class UploadIdTest(unittest.TestCase):
     def test_without_a_seed_every_id_is_new(self):
         self.assertNotEqual(upload_id_of(SYSTEM_SET), upload_id_of(SYSTEM_SET))
 
+    def test_one_folder_uploaded_twice_gets_two_ids(self):
+        """A build and the doc workflow of one run can upload one folder as two different sets."""
+        markdown = DocumentationSet(path="./docs", type="component-docs", system="orders",
+                                    component="foo-bar-scs", template="arc42",
+                                    source_format="markdown")
+        microsite = DocumentationSet(path="./docs", type="component-docs", system="orders",
+                                     component="foo-bar-scs", template="arc42", source_format="html",
+                                     location="6-runtime-view", topic="javadoc", label="Javadoc")
+
+        self.assertNotEqual(upload_id_of(markdown, "example-org/orders/17/1"),
+                            upload_id_of(microsite, "example-org/orders/17/1"))
+
+    def test_two_topics_of_one_folder_get_two_ids(self):
+        rest_docs = DocumentationSet(path="./target/docs", type="component-docs", system="orders",
+                                     component="foo-bar-scs", template="arc42", source_format="html",
+                                     location="6-runtime-view", topic="rest-docs", label="REST Docs")
+        javadoc = DocumentationSet(path="./target/docs", type="component-docs", system="orders",
+                                   component="foo-bar-scs", template="arc42", source_format="html",
+                                   location="6-runtime-view", topic="javadoc", label="Javadoc")
+
+        self.assertNotEqual(upload_id_of(rest_docs, "example-org/orders/17/1"),
+                            upload_id_of(javadoc, "example-org/orders/17/1"))
+
+    def test_two_subjects_of_one_folder_get_two_ids(self):
+        component = DocumentationSet(path="./target/docs", type="component-docs", system="orders",
+                                     component="foo-bar-scs", template="arc42",
+                                     source_format="markdown")
+        library = DocumentationSet(path="./target/docs", type="library-docs", system="orders",
+                                   library="orders-common-lib", template="arc42",
+                                   source_format="markdown")
+
+        self.assertNotEqual(upload_id_of(component, "example-org/orders/17/1"),
+                            upload_id_of(library, "example-org/orders/17/1"))
+
+
+class VersionSourceTest(unittest.TestCase):
+    """Where a caller expects the version from, when a set that needs one has none."""
+
+    @patch('jeap_pipeline.doc_upload.fetch_client_credentials_token')
+    def test_the_caller_names_where_the_version_comes_from(self, token):
+        token.return_value = 'token'
+
+        with self.assertRaises(DocumentationConfigError) as refused:
+            upload_documentation_sets([COMPONENT_SET], DOC_SERVICE_URL, TOKEN_URI, 'client',
+                                      'secret', PROVENANCE,
+                                      version_source="Set the 'version' input of the step.")
+
+        self.assertIn("Set the 'version' input of the step.", str(refused.exception))
+        token.assert_not_called()
+
 
 class UploadQueryParametersTest(unittest.TestCase):
     """What an upload says about itself is `DocumentationSet`'s; this is the provenance half."""

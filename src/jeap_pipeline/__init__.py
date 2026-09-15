@@ -28,9 +28,12 @@ from .doc_publish_branches import (publishes_from, publish_branches_of, branch_m
                                    PublicationDecision, PUBLISH_BRANCHES_KEY,
                                    RULE_DEFAULT_BRANCH, RULE_PUBLISH_BRANCHES, RULE_TAG)
 from .doc_service_operations import (DocumentationSet, documentation_sets_from_config,
+                                     documentation_sets_from_entries,
                                      validate_documentation_structure, StructureReport,
                                      StructureFinding, StructureFindingCode, CONFIGURATION_ROOT_KEYS,
                                      DOCUMENTATION_SET_KEYS, DOCUMENTATION_SETS_KEY,
+                                     GENERATED_DOCUMENTATION_SET_KEYS,
+                                     GENERATED_DOCUMENTATION_SETS_KEY,
                                      SUBJECT_KEYS,
                                      DOCUMENTATION_TYPES, SOURCE_FORMATS, DocumentationConfigError,
                                      DocServiceError, DocServiceRequestError)

@@ -15,7 +15,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Tuple
+from typing import Any, Collection, Dict, FrozenSet, List, Optional, Sequence, Tuple
 
 import requests
 
@@ -34,6 +34,10 @@ SOURCE_FORMATS: FrozenSet[str] = frozenset({"markdown", "html"})
 
 #: The key holding the documentation sets of a repository.
 DOCUMENTATION_SETS_KEY = "docs"
+
+#: The key holding the documentation a build generates - a different list in a different file, and
+#: named differently so that the two are not mistaken for one another.
+GENERATED_DOCUMENTATION_SETS_KEY = "generated-docs"
 
 #: The keys the root of a documentation configuration may carry beside `docs`: what the repository
 #: documents, which is the same for every set in it. `version` and `site` are part of the upload
@@ -54,6 +58,22 @@ CONFIGURATION_ROOT_KEYS: FrozenSet[str] = frozenset(
 DOCUMENTATION_SET_KEYS: FrozenSet[str] = frozenset({
     "path", "type", "template", "source-format", "location", "topic", "label",
 })
+
+#: The keys one entry of generated documentation may carry: what the folder is, and what it is
+#: about. A build is not a subject the way a documentation repository is - one build can generate
+#: the documentation of a component and of the library it publishes beside it - so every entry
+#: names its own.
+GENERATED_DOCUMENTATION_SET_KEYS: FrozenSet[str] = frozenset(
+    DOCUMENTATION_SET_KEYS | {"system", "component", "library"})
+
+# Why a key of the upload contract is not written into an entry of generated documentation.
+_NOT_IN_A_GENERATED_ENTRY = {
+    "version": "the version of what a build generated is the pipeline's to send - it is what the "
+               "build just gave the artifact",
+    "site": "a build does not choose the site its documentation is published on",
+    PUBLISH_BRANCHES_KEY: "which runs publish is a switch of the pipeline configuration, not of one "
+                          "folder in it",
+}
 
 _SLUG_PATTERN = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 _VALIDATION_PATH = "/api/uploads/docs/validation"
@@ -223,7 +243,8 @@ class DocumentationSet:
 
     def upload_query_parameters(self,
                                 provenance: Dict[str, str],
-                                version: Optional[str] = None) -> Dict[str, str]:
+                                version: Optional[str] = None,
+                                version_source: Optional[str] = None) -> Dict[str, str]:
         """
         The query parameters of an upload - what the set is, plus where it comes from.
 
@@ -239,6 +260,9 @@ class DocumentationSet:
             version (str, optional): The version of the component or library the set documents.
                 Without it the `version` of the documentation configuration is sent, which is where
                 a repository states one explicitly.
+            version_source (str, optional): Where a caller expects the version to come from, for
+                the error message when there is none - a build knows it from what it just built,
+                where a documentation repository states it in its configuration.
 
         Raises:
             DocumentationConfigError: If a component's or library's documentation is uploaded
@@ -257,11 +281,13 @@ class DocumentationSet:
         version = version or self.version
         if self.type in ("component-docs", "library-docs"):
             if not version:
+                where = version_source or ("State 'version' at the root of the documentation "
+                                           "configuration, or let the pipeline read it from the "
+                                           "repository.")
                 raise DocumentationConfigError(
                     f"The documentation of the {self.type.split('-')[0]} "
                     f"'{self.subject}' is uploaded with the version of what it documents, and "
-                    f"none was resolved. State 'version' at the root of the documentation "
-                    f"configuration, or let the pipeline read it from the repository.")
+                    f"none was resolved. {where}")
             parameters["version"] = version
         elif version:
             raise DocumentationConfigError(
@@ -375,6 +401,120 @@ def documentation_sets_from_config(configuration: Any,
             raise DocumentationConfigError(
                 f"{source}, {DOCUMENTATION_SETS_KEY}[{index}]: {error}") from None
     return sets
+
+
+def documentation_sets_from_entries(entries: Any,
+                                    source: str = "the pipeline configuration",
+                                    key: str = GENERATED_DOCUMENTATION_SETS_KEY,
+                                    source_formats: Collection[str] = SOURCE_FORMATS
+                                    ) -> List[DocumentationSet]:
+    """
+    Read a list of documentation a build generates into typed documentation sets.
+
+    Unlike a documentation configuration, where the repository says once what it documents, **every
+    entry names its own subject**: one build can generate the documentation of a component and of a
+    library beside it, so there is no single subject to state at the root.
+
+    ```json
+    [
+      {"path": "./target/reports/apidocs", "type": "component-docs", "system": "orders",
+       "component": "foo-bar-scs", "template": "arc42", "source-format": "html",
+       "location": "5-building-block-view", "topic": "javadoc", "label": "Javadoc"}
+    ]
+    ```
+
+    Args:
+        entries (Any): The parsed list - the entries described above.
+        source (str, optional): Where the list came from, for the error messages. Defaults to a
+            generic description.
+        key (str, optional): What the list is called where it came from, for the error messages.
+            Defaults to `generated-docs`.
+        source_formats (Collection[str], optional): The formats this pipeline uploads. An entry
+            written in another one is refused, because a caller that never validates the content of
+            what it publishes should not be handed Markdown. Defaults to every format.
+
+    Raises:
+        DocumentationConfigError: If the list is not a non-empty list, if an entry is wrong, or if
+            two entries would publish over one another. The message names the source and the index
+            of the entry.
+
+    Returns:
+        List[DocumentationSet]: One set per entry, in the order they are configured.
+    """
+    if not isinstance(entries, list):
+        raise DocumentationConfigError(
+            f"{source}: '{key}' has to hold a list of documentation a build generates, not a "
+            f"{type(entries).__name__}. A build can generate more than one, so it is a list even "
+            f"when it carries one entry.")
+    if not entries:
+        raise DocumentationConfigError(
+            f"{source}: '{key}' is empty. Remove the key or add an entry - a pipeline that is asked "
+            f"to publish generated documentation and finds none configured cannot say whether that "
+            f"is right.")
+
+    sets = []
+    for index, entry in enumerate(entries):
+        try:
+            sets.append(_generated_documentation_set(entry, source_formats))
+        except DocumentationConfigError as error:
+            raise DocumentationConfigError(f"{source}, {key}[{index}]: {error}") from None
+
+    _check_entries_do_not_collide(sets, source, key)
+    return sets
+
+
+def _generated_documentation_set(entry: Any,
+                                 source_formats: Collection[str]) -> DocumentationSet:
+    """One entry of generated documentation, with the keys a build may not state refused."""
+    if not isinstance(entry, dict):
+        raise DocumentationConfigError(
+            f"A documentation set has to be an object, not a {type(entry).__name__}.")
+
+    elsewhere = [key for key in sorted(entry) if key in _NOT_IN_A_GENERATED_ENTRY]
+    if elsewhere:
+        raise DocumentationConfigError(
+            "; ".join(f"'{key}' is not stated here: {_NOT_IN_A_GENERATED_ENTRY[key]}"
+                      for key in elsewhere) + ".")
+
+    unknown = sorted(set(entry) - GENERATED_DOCUMENTATION_SET_KEYS)
+    if unknown:
+        raise DocumentationConfigError(
+            f"Unknown key(s) {', '.join(repr(key) for key in unknown)}. "
+            f"Allowed: {', '.join(sorted(GENERATED_DOCUMENTATION_SET_KEYS))}.")
+
+    source_format = entry.get("source-format")
+    if isinstance(source_format, str) and source_format not in source_formats:
+        raise DocumentationConfigError(
+            f"'source-format' is '{source_format}', and this pipeline uploads "
+            f"{', '.join(sorted(source_formats))}. Documentation that is written in the repository "
+            f"rather than generated by the build is declared in the documentation configuration, "
+            f"which validates its content as well.")
+
+    return DocumentationSet(**{key.replace("-", "_"): value for key, value in entry.items()})
+
+
+def _check_entries_do_not_collide(documentation_sets: Sequence[DocumentationSet],
+                                  source: str,
+                                  key: str) -> None:
+    """
+    Refuse two entries the doc service would store as one another.
+
+    A set is kept per subject, and an HTML one per `location` and `topic` within it, so two entries
+    agreeing on those would replace each other on every run - the second one silently winning.
+    """
+    seen: Dict[Tuple[Optional[str], ...], int] = {}
+    for index, documentation_set in enumerate(documentation_sets):
+        place = (documentation_set.subject, documentation_set.location, documentation_set.topic)
+        first = seen.setdefault(place, index)
+        if first != index:
+            where = (f"under '{documentation_set.location}' with the topic "
+                     f"'{documentation_set.topic}'" if documentation_set.topic
+                     else "for the same subject")
+            raise DocumentationConfigError(
+                f"{source}: '{key}'[{first}] and [{index}] both publish the documentation of "
+                f"'{documentation_set.subject}' {where}. The doc service keeps one of them per "
+                f"place, so the two would replace each other on every run - give them topics of "
+                f"their own.")
 
 
 def validate_documentation_structure(doc_service_url: str,
