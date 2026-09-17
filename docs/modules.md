@@ -130,3 +130,8 @@ Decide whether a push publishes the documentation of its repository - see
 - [ECS deployment checks](ecs-deployment.md)
 - [Documentation validation](doc-validation.md)
 - [Documentation upload](doc-upload.md)
+
+## AsciiDoc conversion
+
+See [AsciiDoc conversion](doc-conversion.md) for `convert_asciidoc`,
+`prepare_documentation_config`, `requires_asciidoc_conversion` and `DocumentationConversionError`.

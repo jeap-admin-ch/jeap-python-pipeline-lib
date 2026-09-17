@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.10.0] - 2026-09-17
+
+### Added
+
+- Convert AsciiDoc documentation, including Spring Modulith canvases and PlantUML diagrams, to
+  Markdown before validation and upload. Conversion tools are provisioned by the caller.
+- Prepare documentation configuration without changing the upload contract; reject entries that
+  would replace the same Markdown set after conversion.
+
 ## [1.9.0] - 2026-09-15
 
 ### Added

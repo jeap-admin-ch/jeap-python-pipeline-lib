@@ -1,4 +1,6 @@
 # __init__.py
+from .doc_conversion import convert_asciidoc, DocumentationConversionError
+from .doc_preparation import prepare_documentation_config, requires_asciidoc_conversion
 from .ecs_deployment_checker import (wait_until_deployments_completed, get_deployment_status,
                                      build_cloudwatch_log_stream_url,
                                      get_failure_diagnostics, DeploymentStatus,

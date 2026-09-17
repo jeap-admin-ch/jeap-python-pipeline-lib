@@ -56,6 +56,10 @@ jobs:
 
       - name: Run tests
         run: |
+          npm ci --prefix src/jeap_pipeline/asciidoc_tools --ignore-scripts --no-audit --no-fund
+          export NODE_PATH="$PWD/src/jeap_pipeline/asciidoc_tools/node_modules"
+          .venv/bin/pip install --no-deps pypandoc_binary==1.15
+          export PANDOC="$(.venv/bin/python -c 'import pypandoc; print(pypandoc.get_pandoc_path())')"
           .venv/bin/python -m pytest
 
       - name: Commit and push generated files

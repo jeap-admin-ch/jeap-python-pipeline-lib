@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+node_modules/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -143,4 +144,3 @@ dmypy.json
 *.xml
 *.swp
 /.idea/
-

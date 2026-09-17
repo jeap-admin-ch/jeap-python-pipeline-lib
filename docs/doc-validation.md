@@ -1,5 +1,8 @@
 # Documentation validation
 
+AsciiDoc inputs are [converted first](doc-conversion.md). The validator receives the prepared
+Markdown configuration, never the original AsciiDoc entry.
+
 Teams document next to their code: a repository holds Markdown under `docs/`, a pipeline uploads it to the
 **jEAP doc service**, and the doc service generates one arc42 site out of the uploaded documentation and the
 architecture model. The generator runs centrally, so a page that cannot be published would otherwise fail a
