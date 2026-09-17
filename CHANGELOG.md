@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.10.1] - 2026-09-17
+
+### Fixed
+
+- Support AsciiDoc preparation for build-generated documentation as well as standalone documentation.
+  Preserve build settings and validate each generated entry's subject before conversion and upload.
+
 ## [1.10.0] - 2026-09-17
 
 ### Added

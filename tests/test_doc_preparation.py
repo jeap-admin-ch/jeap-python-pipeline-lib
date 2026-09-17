@@ -3,7 +3,8 @@ import os
 
 import pytest
 
-from jeap_pipeline import (DocumentationConfigError, documentation_sets_from_config,
+from jeap_pipeline import (DocumentationConfigError, DocumentationPathError,
+                           documentation_sets_from_config, documentation_sets_from_entries,
                            prepare_documentation_config, requires_asciidoc_conversion)
 
 
@@ -65,3 +66,84 @@ def test_markdown_passes_through_without_tools(tmp_path):
 def test_output_must_not_overwrite_input(tmp_path):
     with pytest.raises(DocumentationConfigError, match="overlap"):
         prepare_documentation_config(configuration(), "input", str(tmp_path))
+
+
+def build_configuration():
+    return {"generated-docs": [dict(configuration()["docs"][0], system="orders",
+                                    component="orders-service")],
+            "branch": {"feature": {"uploadGeneratedDocs": False}},
+            "docker": {"imagesToBuild": [{"imageRepositoryName": "orders"}]}}
+
+
+def test_build_converts_per_subject_and_preserves_html_and_pipeline_settings(tmp_path):
+    config = build_configuration()
+    config["generated-docs"].extend([
+        {"path": "html", "type": "component-docs", "system": "orders", "component": "orders-service",
+         "template": "arc42", "source-format": "html", "location": "5-building-block-view",
+         "topic": "javadoc", "label": "Javadoc"},
+        dict(config["generated-docs"][0], path="library", type="library-docs", component=None,
+             library="orders-common")])
+    saved = copy.deepcopy(config)
+    for name in ("input", "library"):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "all-docs.adoc").write_text("== Application\nText\n")
+    assert requires_asciidoc_conversion(config, config_kind="build")
+    prepared = prepare_documentation_config(config, "prepared", str(tmp_path), config_kind="build",
+                                             pandoc=os.getenv("PANDOC", "pandoc"))
+    component, html, library = documentation_sets_from_entries(prepared["generated-docs"])
+    assert component.path == "prepared/set-0"
+    assert component.component == "orders-service"
+    assert component.source_format == library.source_format == "markdown"
+    assert component.location is None and component.version is None
+    assert library.path == "prepared/set-2" and library.library == "orders-common"
+    assert html.path == "html" and html.source_format == "html"
+    assert prepared["generated-docs"][1] == saved["generated-docs"][1]
+    assert prepared["branch"] == saved["branch"] and prepared["docker"] == saved["docker"]
+    assert config == saved
+    assert (tmp_path / library.path / "5-building-block-view/modulith-application.md").exists()
+
+
+@pytest.mark.parametrize("key,value", [("version", "1.0.0"), ("site", "handbook"),
+                                      ("publish-branches", ["master"]), ("typo", "wrong"),
+                                      ("entry", "../outside.adoc"), ("location", "../outside")])
+def test_build_preparation_retains_generated_entry_rules(key, value):
+    config = build_configuration()
+    config["generated-docs"][0][key] = value
+    with pytest.raises(DocumentationConfigError, match="generated-docs"):
+        requires_asciidoc_conversion(config, config_kind="build")
+
+
+def test_build_collisions_are_checked_after_conversion():
+    config = build_configuration()
+    config["generated-docs"].append(dict(config["generated-docs"][0], path="other",
+                                         location="6-runtime-view"))
+    with pytest.raises(DocumentationConfigError, match="replace"):
+        requires_asciidoc_conversion(config, config_kind="build")
+
+
+def test_build_inspection_needs_no_generated_files_but_conversion_does(tmp_path):
+    config = build_configuration()
+    assert requires_asciidoc_conversion(config, config_kind="build")
+    with pytest.raises(DocumentationPathError, match="input"):
+        prepare_documentation_config(config, "prepared", str(tmp_path), config_kind="build")
+    assert not (tmp_path / "prepared").exists()
+
+
+def test_build_markdown_passes_through_without_tools(tmp_path):
+    config = build_configuration()
+    config["generated-docs"][0]["source-format"] = "markdown"
+    del config["generated-docs"][0]["location"]
+    assert not requires_asciidoc_conversion(config, config_kind="build")
+    assert prepare_documentation_config(config, "prepared", str(tmp_path), node="missing",
+                                         config_kind="build") == config
+
+
+@pytest.mark.parametrize("config", [None, [], {}, {"generated-docs": []}, {"generated-docs": "input"}])
+def test_invalid_build_configuration_is_refused(config):
+    with pytest.raises(DocumentationConfigError):
+        requires_asciidoc_conversion(config, config_kind="build")
+
+
+def test_unknown_configuration_kind_is_refused():
+    with pytest.raises(DocumentationConfigError, match="config_kind"):
+        requires_asciidoc_conversion(configuration(), config_kind="typo")
