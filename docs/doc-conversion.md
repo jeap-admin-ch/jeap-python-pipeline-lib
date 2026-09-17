@@ -43,6 +43,43 @@ the prepared configuration. Version, subject and branch settings are retained.
 tools. `convert_asciidoc(input_directory, output_directory, entry="all-docs.adoc")` is the lower-level
 API for callers that only need Markdown pages, without upload configuration.
 
+### Documentation generated during a build
+
+Pass `config_kind="build"` to both preparation functions to read `generated-docs` in a build
+configuration. Every entry names its own subject, while unrelated build settings pass through:
+
+```json
+{
+  "generated-docs": [
+    {
+      "path": "./orders-service/target/spring-modulith-docs",
+      "type": "component-docs",
+      "system": "orders",
+      "component": "orders-service",
+      "template": "arc42",
+      "source-format": "asciidoc",
+      "entry": "all-docs.adoc",
+      "location": "5-building-block-view"
+    }
+  ]
+}
+```
+
+```python
+from jeap_pipeline import prepare_documentation_config, documentation_sets_from_entries
+
+# Run after the build and tests have produced the input files.
+prepared = prepare_documentation_config(configuration, ".jeap-converted-docs", config_kind="build")
+sets = documentation_sets_from_entries(prepared["generated-docs"])
+# Validate these sets, including their Markdown content, before uploading the same files.
+```
+
+`requires_asciidoc_conversion(configuration, config_kind="build")` inspects configuration without
+requiring generated files. Conversion itself fails if the build did not produce them, for example
+because documentation-generating tests were skipped. The caller still controls publication branches
+and supplies the build's artifact version; these are not properties of a generated entry.
+HTML and Markdown entries pass through without conversion. Both input shapes use the same converter.
+
 ## Tools
 
 Python 3.10+, Node 20+ and Pandoc 3.6.1 are used. Node runs the small Asciidoctor bridge;
