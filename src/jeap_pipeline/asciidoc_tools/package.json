@@ -1,0 +1,9 @@
+{
+  "name": "jeap-asciidoc-tools",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@asciidoctor/core": "3.0.4",
+    "@asciidoctor/docbook-converter": "3.0.0"
+  }
+}
