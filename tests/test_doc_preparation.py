@@ -87,8 +87,8 @@ def test_build_converts_per_subject_and_preserves_html_and_pipeline_settings(tmp
     for name in ("input", "library"):
         (tmp_path / name).mkdir()
         (tmp_path / name / "all-docs.adoc").write_text("== Application\nText\n")
-    assert requires_asciidoc_conversion(config, config_kind="build")
-    prepared = prepare_documentation_config(config, "prepared", str(tmp_path), config_kind="build",
+    assert requires_asciidoc_conversion(config)
+    prepared = prepare_documentation_config(config, "prepared", str(tmp_path),
                                              pandoc=os.getenv("PANDOC", "pandoc"))
     component, html, library = documentation_sets_from_entries(prepared["generated-docs"])
     assert component.path == "prepared/set-0"
@@ -110,7 +110,7 @@ def test_build_preparation_retains_generated_entry_rules(key, value):
     config = build_configuration()
     config["generated-docs"][0][key] = value
     with pytest.raises(DocumentationConfigError, match="generated-docs"):
-        requires_asciidoc_conversion(config, config_kind="build")
+        requires_asciidoc_conversion(config)
 
 
 def test_build_collisions_are_checked_after_conversion():
@@ -118,14 +118,14 @@ def test_build_collisions_are_checked_after_conversion():
     config["generated-docs"].append(dict(config["generated-docs"][0], path="other",
                                          location="6-runtime-view"))
     with pytest.raises(DocumentationConfigError, match="replace"):
-        requires_asciidoc_conversion(config, config_kind="build")
+        requires_asciidoc_conversion(config)
 
 
 def test_build_inspection_needs_no_generated_files_but_conversion_does(tmp_path):
     config = build_configuration()
-    assert requires_asciidoc_conversion(config, config_kind="build")
+    assert requires_asciidoc_conversion(config)
     with pytest.raises(DocumentationPathError, match="input"):
-        prepare_documentation_config(config, "prepared", str(tmp_path), config_kind="build")
+        prepare_documentation_config(config, "prepared", str(tmp_path))
     assert not (tmp_path / "prepared").exists()
 
 
@@ -133,17 +133,24 @@ def test_build_markdown_passes_through_without_tools(tmp_path):
     config = build_configuration()
     config["generated-docs"][0]["source-format"] = "markdown"
     del config["generated-docs"][0]["location"]
-    assert not requires_asciidoc_conversion(config, config_kind="build")
-    assert prepare_documentation_config(config, "prepared", str(tmp_path), node="missing",
-                                         config_kind="build") == config
+    assert not requires_asciidoc_conversion(config)
+    assert prepare_documentation_config(config, "prepared", str(tmp_path), node="missing") == config
 
 
 @pytest.mark.parametrize("config", [None, [], {}, {"generated-docs": []}, {"generated-docs": "input"}])
 def test_invalid_build_configuration_is_refused(config):
     with pytest.raises(DocumentationConfigError):
-        requires_asciidoc_conversion(config, config_kind="build")
+        requires_asciidoc_conversion(config)
 
 
-def test_unknown_configuration_kind_is_refused():
-    with pytest.raises(DocumentationConfigError, match="config_kind"):
-        requires_asciidoc_conversion(configuration(), config_kind="typo")
+@pytest.mark.parametrize("config", [
+    {}, {"branch": {}},
+    dict(configuration(), **{"generated-docs": []}),
+    dict(build_configuration(), docs=None),
+])
+def test_missing_or_ambiguous_layout_is_refused_by_both_entry_points(config, tmp_path):
+    with pytest.raises(DocumentationConfigError, match="exactly one"):
+        requires_asciidoc_conversion(config)
+    with pytest.raises(DocumentationConfigError, match="exactly one"):
+        prepare_documentation_config(config, "prepared", str(tmp_path), node="missing")
+    assert not (tmp_path / "prepared").exists()
