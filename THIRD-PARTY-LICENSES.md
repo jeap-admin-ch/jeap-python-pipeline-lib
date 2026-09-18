@@ -3,9 +3,9 @@
 | PyYAML             | 6.0.3       | MIT License                                                  |
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
-| boto3              | 1.43.89     | Apache-2.0                                                   |
+| boto3              | 1.43.94     | Apache-2.0                                                   |
 | botocore           | 1.43.97     | Apache-2.0                                                   |
-| build              | 1.6.0       | MIT                                                          |
+| build              | 1.6.1       | MIT                                                          |
 | certifi            | 2026.7.22   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.5.1       | MIT                                                          |
 | docutils           | 0.23        | BSD License; GNU General Public License (GPL); Public Domain |
