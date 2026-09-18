@@ -45,8 +45,9 @@ API for callers that only need Markdown pages, without upload configuration.
 
 ### Documentation generated during a build
 
-Pass `config_kind="build"` to both preparation functions to read `generated-docs` in a build
-configuration. Every entry names its own subject, while unrelated build settings pass through:
+Both preparation functions detect the layout from `docs` or `generated-docs`; configurations
+containing both keys or neither key are rejected. In a build configuration, every `generated-docs`
+entry names its own subject, while unrelated build settings pass through:
 
 ```json
 {
@@ -69,12 +70,12 @@ configuration. Every entry names its own subject, while unrelated build settings
 from jeap_pipeline import prepare_documentation_config, documentation_sets_from_entries
 
 # Run after the build and tests have produced the input files.
-prepared = prepare_documentation_config(configuration, ".jeap-converted-docs", config_kind="build")
+prepared = prepare_documentation_config(configuration, ".jeap-converted-docs")
 sets = documentation_sets_from_entries(prepared["generated-docs"])
 # Validate these sets, including their Markdown content, before uploading the same files.
 ```
 
-`requires_asciidoc_conversion(configuration, config_kind="build")` inspects configuration without
+`requires_asciidoc_conversion(configuration)` inspects configuration without
 requiring generated files. Conversion itself fails if the build did not produce them, for example
 because documentation-generating tests were skipped. The caller still controls publication branches
 and supplies the build's artifact version; these are not properties of a generated entry.

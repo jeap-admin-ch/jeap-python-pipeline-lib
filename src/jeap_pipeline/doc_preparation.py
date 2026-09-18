@@ -9,24 +9,25 @@ from .doc_service_operations import (DocumentationConfigError, documentation_set
                                      documentation_sets_from_entries)
 
 
-def requires_asciidoc_conversion(configuration: dict, *, config_kind: str = "documentation") -> bool:
+def requires_asciidoc_conversion(configuration: dict) -> bool:
     """Validate pipeline configuration and say whether conversion tools are needed."""
-    _, conversions = _normalize(configuration, _entries_key(config_kind))
+    _, conversions = _normalize(configuration, _entries_key(configuration))
     return bool(conversions)
 
 
 def prepare_documentation_config(configuration: dict, output_directory: str,
                                   working_directory: str = ".", node: str = "node",
-                                  pandoc: str = "pandoc", *, config_kind: str = "documentation") -> dict:
+                                  pandoc: str = "pandoc") -> dict:
     """Convert AsciiDoc entries and return configuration for existing validation and upload.
 
     Output is relative to the checkout and must be empty. The returned paths are also relative
     to the checkout, not to the file where the caller saves the configuration. The input object
     is never modified. Ordinary Markdown and HTML entries pass through unchanged.
-    Use config_kind="build" for generated-docs entries, each naming its own subject.
+    The layout is inferred from docs or generated-docs; exactly one must be present.
+    Each generated-docs entry names its own subject.
     Build configuration outside generated-docs is preserved without interpreting it.
     """
-    key = _entries_key(config_kind)
+    key = _entries_key(configuration)
     prepared, conversions = _normalize(configuration, key)
     root = Path(working_directory).resolve()
     output = (root / output_directory).resolve()
@@ -48,15 +49,17 @@ def prepare_documentation_config(configuration: dict, output_directory: str,
     return prepared
 
 
-def _entries_key(config_kind):
-    if config_kind not in ("documentation", "build"):
-        raise DocumentationConfigError("config_kind must be 'documentation' or 'build'.")
-    return "generated-docs" if config_kind == "build" else "docs"
+def _entries_key(configuration):
+    if not isinstance(configuration, dict):
+        raise DocumentationConfigError("The pipeline configuration must be an object.")
+    keys = [key for key in ("docs", "generated-docs") if key in configuration]
+    if len(keys) != 1:
+        raise DocumentationConfigError(
+            "The pipeline configuration must contain exactly one of 'docs' or 'generated-docs'.")
+    return keys[0]
 
 
 def _normalize(configuration, key):
-    if not isinstance(configuration, dict):
-        raise DocumentationConfigError("The pipeline configuration must be an object.")
     prepared = copy.deepcopy(configuration)
     conversions = []
     if isinstance(prepared.get(key), list):

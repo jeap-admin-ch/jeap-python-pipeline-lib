@@ -12,6 +12,7 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 ### Fixed
 
 - Support AsciiDoc preparation for build-generated documentation as well as standalone documentation.
+  Detect the configuration layout from `docs` or `generated-docs` without an additional mode parameter.
   Preserve build settings and validate each generated entry's subject before conversion and upload.
 
 ## [1.10.0] - 2026-09-17
