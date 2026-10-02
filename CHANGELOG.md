@@ -7,6 +7,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.11.0] - 2026-10-02
+
+### Added
+
+- Support for diagrams in documentation sets. A diagram is committed as two files side by side, the editable
+  source (`images/overview.drawio`) and the image exported from it by hand (`images/overview.svg`). The new
+  `check_diagram_sources` reports `STALE_DIAGRAM_IMAGE` when a source was committed after its image, so a
+  forgotten export fails the validation instead of leaving the published page showing an older picture, and
+  `UNDATABLE_DIAGRAM_HISTORY` when the checkout cannot date the diagrams at all. `diagram_pairs_of` and
+  `diagram_sources_of` expose the pairing rule.
+- `validate_documentation_sets` takes `deepen_diagram_history`, which lets the diagram check fetch the history
+  a shallow checkout lacks. Only a set that actually has a diagram ever causes a fetch.
+
+### Changed
+
+- `collect_documentation_paths` leaves the diagram sources out: a `.drawio` is not an extension the doc service
+  publishes, so a set carrying one would be refused. Pass `keep_diagram_sources=True` for the unfiltered list.
+- `SetOutcome` carries a third report, `diagrams`, and `Finding.location` a third value, `diagrams`.
+
 ## [1.10.1] - 2026-09-17
 
 ### Fixed
