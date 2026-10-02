@@ -23,6 +23,9 @@ from .remedy_operations import create_change_request_in_remedy, get_change_reque
 from .test_orchestrator import start_test_case, wait_until_test_case_ends, start_multiple_test_cases, NO_RESULT, PASS
 from .oauth_token import fetch_client_credentials_token, OAuthTokenError
 from .doc_path_tree import collect_documentation_paths, DocumentationPathError
+from .doc_diagram_sources import (check_diagram_sources, diagram_pairs_of, diagram_sources_of,
+                                  DiagramReport, DiagramFinding, DiagramFindingCode, DiagramPair,
+                                  IMAGE_EXTENSIONS, PUBLISHED_EXTENSIONS)
 from .doc_content_validation import (validate_documentation_content, ContentReport, ContentFinding,
                                      ContentFindingCode, ALLOWED_FRONT_MATTER_KEYS,
                                      DEFAULT_MAX_FINDINGS)

@@ -57,6 +57,13 @@ The archive holds exactly the files [`collect_documentation_paths`](doc-validati
 they have inside the set: the folder inside the archive is the chapter folder the doc service sorts the pages
 into, so what was validated is what is uploaded.
 
+**Diagram sources are left out.** A diagram is committed as the editable source (`images/overview.drawio`) plus
+the image exported from it (`images/overview.svg`); the source stays in the repository and only the picture is
+uploaded, because a `.drawio` is not an extension the doc service publishes - a set carrying one would be
+refused - and an editor file is nothing a reader could open. That the image was actually re-exported is the
+validation's business, not the upload's: see
+[The diagram checks](doc-validation.md#the-diagram-checks).
+
 ## Documentation a build generates
 
 A folder a build writes - Javadoc, Spring REST Docs, a test report - is declared in the pipeline configuration of

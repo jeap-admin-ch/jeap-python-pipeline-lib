@@ -10,11 +10,12 @@ site build twenty minutes later, naming a route rather than a file, far away fro
 
 This module is what prevents that: it validates a repository's documentation **before anything is uploaded**.
 
-## Two responsibilities, and who carries which
+## Three responsibilities, and who carries which
 
 | Responsibility | Where                 | What it checks                                                                                                                                                                                      |
 |----------------|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Content**    | here, in the pipeline | The Markdown itself: it is UTF-8, it parses as CommonMark, its front matter is a mapping whose keys are allowed, and every relative link and image resolves to a file in the same documentation set |
+| **Diagrams**   | here, in the pipeline | That the image of every diagram was exported after the diagram was last edited                                                                                                                      |
 | **Structure**  | in the doc service    | The path tree against the structure template: which chapter folders exist, which extensions they take, and which names the generator writes itself                                                  |
 
 The structure is not checked here on purpose. The rules belong to the structure template - arc42 today - which
@@ -45,14 +46,17 @@ if not outcome.accepted:
     raise SystemExit(1)
 ```
 
-One token is fetched for all the sets, and both checks always run: a structural problem does not hide the
+One token is fetched for all the sets, and every check always runs: a structural problem does not hide the
 content problems, and the other way round, because a validation reporting one thing at a time would cost a push
 per mistake.
 
+A pipeline that checks out **shallowly** passes `deepen_diagram_history=True`, which lets the diagram check
+fetch the history it needs to date a diagram - see [The diagram checks](#the-diagram-checks).
+
 `outcome` carries three things a pipeline needs: `accepted` (the exit code), `report` (the rendered text) and
-`findings` - the two reports flattened into one list, each finding with its code, message, path and line, so a
-pipeline can report each one on the file and the line it is about. `Finding.repository_path` prefixes the set's
-own folder, so the path is the one the repository sees.
+`findings` - the reports flattened into one list, each finding with its `location` (`diagrams`, `content` or
+`structure`), code, message, path and line, so a pipeline can report each one on the file and the line it is
+about. `Finding.repository_path` prefixes the set's own folder, so the path is the one the repository sees.
 
 ## The documentation configuration
 
@@ -163,6 +167,62 @@ this check for free:
   fails the site build;
 - a link to a **generated page** is a `DEAD_LINK`, because a generated page is not a file in the repository.
   Link one from the site instead, with an absolute path.
+
+## The diagram checks
+
+A diagram is **two files committed side by side in one folder**: the editable source the author works in,
+`images/overview.drawio`, and the image exported from it, `images/overview.svg`, which is what the page embeds.
+Nothing renders the diagram in the pipeline - that was the decision, so that the picture is already visible in
+the preview of a Markdown editor and the convention holds for every diagram tool.
+
+The price of exporting by hand is that it can be forgotten, and that failure is silent: the source is committed
+changed, the image stays as it was, and the published page goes on showing last month's picture with nobody the
+wiser. So the sources are **left out of the upload** - a `.drawio` is not an extension the doc service
+publishes, and an editor file is nothing a reader could open - and the pair is **dated**.
+
+| Code                        | What it means                                                                                             |
+|-----------------------------|-----------------------------------------------------------------------------------------------------------|
+| `STALE_DIAGRAM_IMAGE`       | The source was committed after its image was exported. Open it, export it over the image, commit both    |
+| `UNDATABLE_DIAGRAM_HISTORY` | The checkout cannot date the diagrams - it is shallow, or not a git checkout at all. A set-level finding |
+
+### Which file is whose source
+
+A file is the source of an image when, **in the same folder**, there is an image file whose stem it extends -
+its name is `<image-stem>.<anything>` - and its own extension is not one the doc service publishes
+(`md png jpg jpeg gif webp avif svg pdf txt csv json yaml yml`):
+
+| In one folder                      | Verdict                                                 |
+|------------------------------------|---------------------------------------------------------|
+| `overview.svg` + `overview.drawio` | `overview.drawio` is the source                         |
+| `flow.png` + `flow.drawio.xml`     | `flow.drawio.xml` is the source                         |
+| `report.svg` + `report.pdf`        | not a pair - a `.pdf` is published, so it is an asset   |
+| `diagram.svg` + `diagram.png`      | not a pair - both are published                         |
+
+The rule is about the name and not about a list of known diagram tools on purpose: hand-exported images were
+chosen precisely so that the convention holds for any editor, and an allowlist of tools would need a release of
+this library for every new one. Requiring the companion to be an image, and the candidate to be something the
+doc service would refuse anyway, is what keeps the rule from swallowing a real asset. When several images could
+claim one source the most specific wins: with `flow.svg` and `flow.detail.svg` both present,
+`flow.detail.drawio` belongs to `flow.detail.svg`.
+
+### Why commit dates, and why a shallow checkout is refused
+
+**Not file modification times.** Git neither stores nor restores mtimes: a checkout writes every file at the
+same moment, so in a pipeline all mtimes are equal and their order is whatever order git happened to write them
+in. An mtime check would pass by luck. The committer date of the commit that last touched each file is the only
+thing about a file's age that survives a clone. Two commits pushed together can share a second, so an equal
+date is decided by asking which of the two commits came first in the history.
+
+**A shallow checkout has no dates.** `git log -1 -- <path>` answers with the grafted boundary commit for every
+file last touched further back, and that answer cannot be told apart from "really changed there" - every pair
+would look exactly as old as its image and the check would quietly stop working. So an answer from the boundary
+is treated as no answer: with `deepen_diagram_history=True` the history is fetched in rounds (64, 256, 1024
+commits, then all of it) until the diagrams can be dated; without it the set is reported
+`UNDATABLE_DIAGRAM_HISTORY`. **A set with no diagram causes no git call at all**, so a repository that
+documents without one never pays for history to find that out.
+
+A pair that is **not committed yet** is counted and skipped rather than refused, so the check can be run on a
+working tree while a diagram is being added.
 
 ### What is deliberately not checked
 

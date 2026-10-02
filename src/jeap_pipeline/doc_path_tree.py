@@ -4,13 +4,23 @@ What the jEAP doc service is told about an upload is where each file sits in the
 a pipeline that wants to know whether a documentation set would be accepted starts by walking that
 folder into a list of relative paths.
 
-The list is deliberately unfiltered: the doc service drops the files nobody wrote - `.DS_Store`,
+The list is otherwise unfiltered: the doc service drops the files nobody wrote - `.DS_Store`,
 `__MACOSX/`, `Thumbs.db` and their kind - by name and counts them in its answer, so a second copy of
 that list here would be a second thing to keep in step.
+
+The one exception is the **diagram sources**. A diagram is committed as the editable source
+(`images/overview.drawio`) plus the image exported from it (`images/overview.svg`), and the source
+has to come out before the set is sent: its extension is not one the doc service publishes, so a set
+carrying one would be refused, and an editor file is not something a reader could open anyway. That
+cannot be left to the doc service, which is why it is the one filter here. See
+`doc_diagram_sources` for the pairing rule and for the check that the image was actually
+re-exported.
 """
 
 import os
 from typing import List
+
+from .doc_diagram_sources import diagram_sources_of
 
 #: Directories never walked into. `.git` is not part of a documentation set, and a `path` pointing
 #: at a repository root would otherwise send the whole history to the doc service.
@@ -42,7 +52,7 @@ def documentation_set_root(path: str, working_directory: str = ".") -> str:
     return f"{working_directory.rstrip('/')}/{normalized}" if normalized else working_directory
 
 
-def collect_documentation_paths(root: str) -> List[str]:
+def collect_documentation_paths(root: str, keep_diagram_sources: bool = False) -> List[str]:
     """
     List every file below `root` as a relative path, the way an upload would carry it.
 
@@ -52,9 +62,15 @@ def collect_documentation_paths(root: str) -> List[str]:
     Symbolic links are skipped, files and directories alike: a link is not a file an upload carries,
     and following one leaves the documentation set.
 
+    Diagram sources are left out, because an upload does not carry them - see
+    `doc_diagram_sources.diagram_sources_of` for which files those are.
+
     Args:
         root (str): The folder of the documentation set - the `path` of a documentation
             configuration entry.
+        keep_diagram_sources (bool, optional): Whether to keep the diagram sources in the list.
+            Defaults to `False`, the list an upload sends. The diagram check needs them, since they
+            are what it is about.
 
     Raises:
         DocumentationPathError: If `root` does not exist or is not a directory. A typo in the
@@ -83,4 +99,8 @@ def collect_documentation_paths(root: str) -> List[str]:
                 continue
             paths.append(os.path.relpath(absolute, root).replace(os.sep, "/"))
 
-    return sorted(paths)
+    paths = sorted(paths)
+    if keep_diagram_sources:
+        return paths
+    sources = set(diagram_sources_of(paths))
+    return [path for path in paths if path not in sources]

@@ -1,8 +1,9 @@
-"""Validating the documentation of a repository, both responsibilities, in one call.
+"""Validating the documentation of a repository, every responsibility, in one call.
 
 This is what a pipeline calls. It takes the documentation sets a repository configured, and per set:
-walks the folder into a path tree, checks the content of its Markdown pages, asks the jEAP doc
-service whether the tree would be accepted, and renders a report a person can act on.
+walks the folder into a path tree, checks the content of its Markdown pages, checks that the image of
+every diagram was exported after the diagram was last edited, asks the jEAP doc service whether the
+tree would be accepted, and renders a report a person can act on.
 
 What is left to the platform-specific part is which URL to call, where the client secret comes from,
 and where the report is written to.
@@ -13,6 +14,7 @@ from dataclasses import dataclass, field, replace
 from typing import List, Optional, Sequence
 
 from .doc_content_validation import ContentReport, validate_documentation_content
+from .doc_diagram_sources import DiagramReport, check_diagram_sources, diagram_pairs_of
 from .doc_path_tree import collect_documentation_paths, documentation_set_root
 from .doc_service_operations import (DocumentationSet, StructureReport,
                                      validate_documentation_structure)
@@ -28,9 +30,9 @@ class Finding:
     """
     One problem, flattened out of the two reports of one documentation set.
 
-    `location` names the responsibility that found it - `content`, checked in the pipeline, or
-    `structure`, checked by the doc service. It does not say where in the documentation the problem
-    is: that is `path`, and `repository_path` for the file as the repository sees it.
+    `location` names the responsibility that found it - `content` and `diagrams`, checked in the
+    pipeline, or `structure`, checked by the doc service. It does not say where in the documentation
+    the problem is: that is `path`, and `repository_path` for the file as the repository sees it.
     """
 
     documentation_set: str
@@ -55,17 +57,20 @@ class Finding:
 
 @dataclass(frozen=True)
 class SetOutcome:
-    """What both responsibilities said about one documentation set."""
+    """What every responsibility said about one documentation set."""
 
     documentation_set: DocumentationSet
     structure: StructureReport
     content: Optional[ContentReport] = None
+    diagrams: Optional[DiagramReport] = None
     report: str = ""
 
     @property
     def accepted(self) -> bool:
-        """Whether both responsibilities found nothing to report."""
-        return self.structure.accepted and (self.content is None or self.content.accepted)
+        """Whether every responsibility found nothing to report."""
+        return (self.structure.accepted
+                and (self.content is None or self.content.accepted)
+                and (self.diagrams is None or self.diagrams.accepted))
 
 
 @dataclass(frozen=True)
@@ -92,11 +97,12 @@ def validate_documentation_sets(documentation_sets: Sequence[DocumentationSet],
                                 token_uri: str,
                                 client_id: str,
                                 client_secret: str,
-                                working_directory: str = ".") -> DocumentationValidationOutcome:
+                                working_directory: str = ".",
+                                deepen_diagram_history: bool = False) -> DocumentationValidationOutcome:
     """
-    Validate every documentation set of a repository, content and structure.
+    Validate every documentation set of a repository: content, diagrams and structure.
 
-    One token is fetched for all of them. Both checks always run: a structural problem does not hide
+    One token is fetched for all of them. Every check always runs: a structural problem does not hide
     the content problems, and the other way round, because a validation that reported one thing at a
     time would cost a push per mistake.
 
@@ -109,6 +115,10 @@ def validate_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         client_secret (str): The secret of that client.
         working_directory (str, optional): What the `path` of a set is relative to. Defaults to the
             current directory, which in a pipeline is the checkout.
+        deepen_diagram_history (bool, optional): Whether the diagram check may fetch history when
+            the checkout does not reach back far enough to date a diagram. Defaults to `False`; a
+            pipeline that checks out shallowly passes `True`. Only a set that actually has a diagram
+            ever causes a fetch.
 
     Raises:
         OAuthTokenError: If no token can be obtained.
@@ -124,7 +134,7 @@ def validate_documentation_sets(documentation_sets: Sequence[DocumentationSet],
     outcomes = []
     for documentation_set in documentation_sets:
         outcomes.append(_validate_one(documentation_set, doc_service_url, access_token,
-                                      working_directory))
+                                      working_directory, deepen_diagram_history))
 
     findings = [finding for outcome in outcomes for finding in findings_of(outcome)]
     return DocumentationValidationOutcome(
@@ -136,10 +146,17 @@ def validate_documentation_sets(documentation_sets: Sequence[DocumentationSet],
 def _validate_one(documentation_set: DocumentationSet,
                   doc_service_url: str,
                   access_token: str,
-                  working_directory: str) -> SetOutcome:
+                  working_directory: str,
+                  deepen_diagram_history: bool = False) -> SetOutcome:
     """Walk, check and ask, for one documentation set."""
     root = documentation_set_root(documentation_set.path, working_directory)
-    paths = collect_documentation_paths(root)
+    # The diagram sources are what the diagram check is about, and what the upload must not carry,
+    # so the tree is walked once with them and the list the doc service is asked about derived from
+    # it - rather than walking the folder twice and risking two different answers.
+    walked = collect_documentation_paths(root, keep_diagram_sources=True)
+    diagrams = check_diagram_sources(root, walked, deepen=deepen_diagram_history)
+    sources = {pair.source for pair in diagram_pairs_of(walked)}
+    paths = [path for path in walked if path not in sources]
 
     content = None
     if documentation_set.source_format == "markdown":
@@ -148,7 +165,8 @@ def _validate_one(documentation_set: DocumentationSet,
     structure = validate_documentation_structure(doc_service_url, access_token, documentation_set,
                                                  paths)
 
-    outcome = SetOutcome(documentation_set=documentation_set, structure=structure, content=content)
+    outcome = SetOutcome(documentation_set=documentation_set, structure=structure, content=content,
+                         diagrams=diagrams)
     return replace(outcome, report=format_set_report(outcome, len(paths)))
 
 
@@ -174,8 +192,18 @@ def format_set_report(outcome: SetOutcome, paths_walked: int,
         files = outcome.content.files_checked if outcome.content else 0
         lines.append(f"  {files} file(s) checked, {paths_walked} path(s), "
                      f"{outcome.structure.paths_ignored} ignored - "
-                     f"{'content OK, ' if outcome.content else ''}structure OK")
+                     f"{'content OK, ' if outcome.content else ''}"
+                     f"{_diagrams_summary(outcome.diagrams)}structure OK")
         return "\n".join(lines) + "\n"
+
+    if outcome.diagrams is not None and not outcome.diagrams.accepted:
+        lines.append("")
+        lines.append(f"  Diagrams: {len(outcome.diagrams.findings)} problem(s) "
+                     f"in {outcome.diagrams.pairs_checked} diagram(s).")
+        lines.append("")
+        for finding in outcome.diagrams.findings:
+            lines.extend(_finding_lines(finding.path or "(the documentation set)",
+                                        str(finding.code), finding.message))
 
     if outcome.content is not None and not outcome.content.accepted:
         lines.append("")
@@ -224,11 +252,23 @@ def _format_outcome_report(outcomes: Sequence[SetOutcome]) -> str:
 
 
 def _problems_of(outcome: SetOutcome) -> int:
-    """How many problems one set has, both responsibilities together."""
+    """How many problems one set has, every responsibility together."""
     content = 0
     if outcome.content:
         content = len(outcome.content.findings) + outcome.content.findings_omitted
-    return content + len(outcome.structure.findings) + outcome.structure.findings_omitted
+    diagrams = len(outcome.diagrams.findings) if outcome.diagrams else 0
+    return (content + diagrams
+            + len(outcome.structure.findings) + outcome.structure.findings_omitted)
+
+
+def _diagrams_summary(diagrams: Optional[DiagramReport]) -> str:
+    """`3 diagram(s) OK, ` for a set that has diagrams, nothing for one that has none."""
+    if diagrams is None or not diagrams.pairs_checked:
+        return ""
+    checked = diagrams.pairs_checked - diagrams.pairs_uncommitted
+    if diagrams.pairs_uncommitted:
+        return f"{checked} of {diagrams.pairs_checked} diagram(s) OK, "
+    return f"{checked} diagram(s) OK, "
 
 
 def _problem_count(listed: int, omitted: int) -> str:
@@ -276,11 +316,20 @@ def findings_of(outcome: SetOutcome) -> List[Finding]:
     Args:
         outcome (SetOutcome): What was found about the set. The upload builds one carrying only the
             structure report, so a refused upload annotates the same way a refused validation does.
+            The diagram findings come first: an image that was never re-exported is the one problem
+            whose fix is not in the file the other findings point at.
 
     Returns:
         List[Finding]: One finding per problem, each with its code, message, path and line.
     """
     findings = []
+    if outcome.diagrams:
+        for finding in outcome.diagrams.findings:
+            findings.append(Finding(documentation_set=outcome.documentation_set.path,
+                                    location="diagrams",
+                                    code=str(finding.code),
+                                    message=finding.message,
+                                    path=finding.path))
     if outcome.content:
         for finding in outcome.content.findings:
             findings.append(Finding(documentation_set=outcome.documentation_set.path,

@@ -71,6 +71,33 @@ class CollectDocumentationPathsTest(unittest.TestCase):
         with TemporaryDirectory() as root:
             self.assertEqual([], collect_documentation_paths(root))
 
+    def test_a_diagram_source_is_left_out_of_what_an_upload_carries(self):
+        with TemporaryDirectory() as root:
+            _write(root, "architecture.md")
+            _write(root, "images/overview.drawio")
+            _write(root, "images/overview.svg")
+
+            # A .drawio is not an extension the doc service publishes, so a set carrying one would
+            # be refused - and an editor file is nothing a reader could open anyway.
+            self.assertEqual(["architecture.md", "images/overview.svg"],
+                             collect_documentation_paths(root))
+
+    def test_the_diagram_sources_can_be_kept_for_the_diagram_check(self):
+        with TemporaryDirectory() as root:
+            _write(root, "images/overview.drawio")
+            _write(root, "images/overview.svg")
+
+            self.assertEqual(["images/overview.drawio", "images/overview.svg"],
+                             collect_documentation_paths(root, keep_diagram_sources=True))
+
+    def test_an_asset_that_is_not_a_diagram_source_is_kept(self):
+        with TemporaryDirectory() as root:
+            _write(root, "images/report.pdf")
+            _write(root, "images/report.svg")
+
+            self.assertEqual(["images/report.pdf", "images/report.svg"],
+                             collect_documentation_paths(root))
+
 
 if __name__ == "__main__":
     unittest.main()
