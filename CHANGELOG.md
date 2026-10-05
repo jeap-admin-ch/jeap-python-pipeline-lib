@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.12.0] - 2026-10-05
+
+### Added
+
+- Add documentation pipeline helpers for configuration loading, set selection, version
+  precedence, literal POM versions and commit timestamps.
+
 ## [1.11.0] - 2026-10-02
 
 ### Added

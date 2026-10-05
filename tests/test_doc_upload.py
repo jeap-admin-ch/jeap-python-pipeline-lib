@@ -3,10 +3,13 @@ import os
 import tempfile
 import unittest
 import zipfile
+from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
 import requests
 
+from jeap_pipeline import (configured_documentation_sets, documentation_versions,
+                           prepare_documentation_config)
 from jeap_pipeline.doc_path_tree import DocumentationPathError
 from jeap_pipeline.doc_service_operations import (DocServiceError, DocServiceRequestError,
                                                   DocumentationConfigError, DocumentationSet)
@@ -486,6 +489,53 @@ class UploadDocumentationSetsTest(unittest.TestCase):
                                   working_directory=self.directory.name)
 
         self.assertEqual("1.0.0-20260911073000", put.call_args[1]["params"]["version"])
+
+    @patch("jeap_pipeline.doc_upload.fetch_client_credentials_token", return_value="a-token")
+    @patch("jeap_pipeline.doc_upload.requests.put")
+    def test_generated_sets_sharing_a_path_keep_the_system_unversioned(self, put, token):
+        put.return_value = _response(201, STORED_BODY)
+        base = {'path': './docs', 'system': 'orders', 'template': 'arc42',
+                'source-format': 'markdown'}
+        configuration = {'generated-docs': [
+            dict(base, type='component-docs', component='orders-service'),
+            dict(base, type='system-docs')]}
+        prepared = prepare_documentation_config(configuration, '.converted',
+                                                working_directory=self.directory.name)
+        sets = configured_documentation_sets(prepared, 'config.json', True)
+
+        outcome = upload_documentation_sets(
+            sets, DOC_SERVICE_URL, TOKEN_URI, 'client', 'secret', PROVENANCE,
+            versions=documentation_versions(sets, '4.5.6', generated=True),
+            working_directory=self.directory.name)
+
+        self.assertEqual(2, outcome.uploaded_sets)
+        self.assertEqual('4.5.6', put.call_args_list[0].kwargs['params']['version'])
+        self.assertNotIn('version', put.call_args_list[1].kwargs['params'])
+
+    @patch("jeap_pipeline.doc_upload.fetch_client_credentials_token", return_value="a-token")
+    @patch("jeap_pipeline.doc_upload.requests.put")
+    def test_versioned_sets_sharing_a_path_keep_their_own_versions(self, put, token):
+        put.return_value = _response(201, STORED_BODY)
+        sets = [replace(COMPONENT_SET, version='1.0'), replace(LIBRARY_SET, version='2.0')]
+        versions = documentation_versions(sets)
+        versions['./docs'] = 'fallback'
+
+        outcome = upload_documentation_sets(
+            sets, DOC_SERVICE_URL, TOKEN_URI, 'client', 'secret', PROVENANCE,
+            versions=versions, working_directory=self.directory.name)
+
+        self.assertEqual(2, outcome.uploaded_sets)
+        self.assertEqual(['1.0', '2.0'],
+                         [call.kwargs['params']['version'] for call in put.call_args_list])
+
+    @patch("jeap_pipeline.doc_upload.fetch_client_credentials_token")
+    def test_an_explicit_version_for_a_system_is_still_refused(self, token):
+        for key in (SYSTEM_SET.path, SYSTEM_SET):
+            with self.subTest(key=key), self.assertRaises(DocumentationConfigError):
+                upload_documentation_sets(
+                    [SYSTEM_SET], DOC_SERVICE_URL, TOKEN_URI, 'client', 'secret', PROVENANCE,
+                    versions={key: '1.0'}, working_directory=self.directory.name)
+        token.assert_not_called()
 
     @patch("jeap_pipeline.doc_upload.fetch_client_credentials_token", return_value="a-token")
     @patch("jeap_pipeline.doc_upload.requests.put")

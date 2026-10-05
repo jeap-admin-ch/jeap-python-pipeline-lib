@@ -137,3 +137,13 @@ Decide whether a push publishes the documentation of its repository - see
 
 See [AsciiDoc conversion](doc-conversion.md) for `convert_asciidoc`,
 `prepare_documentation_config`, `requires_asciidoc_conversion` and `DocumentationConversionError`.
+
+## Documentation pipeline inputs
+
+`read_documentation_configuration_file`, `configured_documentation_sets`,
+`documentation_versions`, `documentation_pom_version` and `documentation_commit_timestamp`
+provide CI-independent configuration and provenance handling.
+See [Documentation pipeline adapters](doc-pipeline.md).
+
+`documentation_versions` returns versions keyed by path, or by `DocumentationSet` when paths
+are shared. `upload_documentation_sets` accepts both key types, with set keys taking precedence.
