@@ -1,8 +1,8 @@
 # Getting started
 
 `jeap-python-pipeline-lib` is published to PyPI as **`jeap-pipeline`** and imported as
-**`jeap_pipeline`**. It is a plain Python library — there is no CLI. Pipelines (GitHub Actions,
-Jenkins, Tekton) call its functions from small Python steps.
+**`jeap_pipeline`**. It is a plain Python library — there is no CLI. CI/CD pipelines call its
+functions from small Python steps.
 
 ## Install
 

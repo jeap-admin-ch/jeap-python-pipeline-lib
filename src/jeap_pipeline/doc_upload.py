@@ -16,7 +16,7 @@ import time
 import uuid
 import zipfile
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import requests
 
@@ -184,7 +184,7 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
                               client_id: str,
                               client_secret: str,
                               provenance: UploadProvenance,
-                              versions: Optional[Dict[str, str]] = None,
+                              versions: Optional[Dict[Union[str, DocumentationSet], str]] = None,
                               version_source: Optional[str] = None,
                               upload_id_seed: Optional[str] = None,
                               working_directory: str = ".") -> DocumentationUploadOutcome:
@@ -212,7 +212,9 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         client_secret (str): The secret of that client.
         provenance (UploadProvenance): The commit and the run the documentation comes from.
         versions (dict, optional): The version to send per documentation set, keyed by the set's
-            `path`. A component's and a library's documentation carries the version of what it
+            `path` or the `DocumentationSet` itself. A set key takes precedence over its path;
+            use set keys when sets sharing a path need different versions. A component's and a
+            library's documentation carries the version of what it
             documents; a system's carries none, and an entry for a `system-docs` set is refused.
         version_source (str, optional): Where the version is expected to come from, for the error
             message when a set that needs one has none - the input of a build step, say.
@@ -237,7 +239,9 @@ def upload_documentation_sets(documentation_sets: Sequence[DocumentationSet],
         DocumentationUploadOutcome: The per-set outcomes, their findings and the rendered report.
     """
     prepared = [_prepare(documentation_set, provenance,
-                         (versions or {}).get(documentation_set.path), version_source,
+                         (versions or {}).get(documentation_set,
+                                              (versions or {}).get(documentation_set.path)),
+                         version_source,
                          upload_id_seed, working_directory)
                 for documentation_set in documentation_sets]
 
@@ -632,5 +636,4 @@ def _human_size(size_in_bytes: int) -> str:
     if size_in_bytes < 1024 * 1024:
         return f"{size_in_bytes / 1024:.1f} KB"
     return f"{size_in_bytes / (1024 * 1024):.1f} MB"
-
 

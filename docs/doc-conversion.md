@@ -90,8 +90,8 @@ The Python wheel includes `asciidoc_tools/package.json` and its lockfile. Copy t
 tool workspace and run `npm ci --ignore-scripts` there. Set `NODE_PATH` to its `node_modules`.
 The lockfile pins Asciidoctor.js 3.0.4 and the DocBook converter 3.0.0, including transitive dependencies.
 
-Supply `pandoc` on `PATH`, or pass its executable path as the `pandoc` argument. The GitHub action
-installs `pypandoc_binary==1.15`, which provides Pandoc 3.6.1. Pandoc is an external GPL-licensed
+Supply `pandoc` on `PATH`, or pass its executable path as the `pandoc` argument. Installing
+`pypandoc_binary==1.15` provides Pandoc 3.6.1. Pandoc is an external GPL-licensed
 executable, not code bundled into this Python library. Asciidoctor.js and its converter are MIT-licensed.
 
 For tests from this checkout:

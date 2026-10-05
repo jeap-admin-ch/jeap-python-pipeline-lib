@@ -141,6 +141,11 @@ none is refused here rather than by the doc service, so the message names the pi
 a `versions` entry for a `system-docs` set, which has no version to name. Both are refused **before** the first
 upload, as is a folder that is not there, so a run either publishes every set or none.
 
+`versions` accepts paths or `DocumentationSet` objects as keys. A set key takes precedence over
+its path key. When multiple sets share a folder, use set keys to assign their versions individually
+and leave system documentation unversioned. `documentation_versions` selects those keys
+automatically; pass its result directly to `upload_documentation_sets`.
+
 ## Which branches publish
 
 Every push is validated; not every push publishes. Which branches do is a property of the **repository**, so

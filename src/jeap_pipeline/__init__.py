@@ -49,3 +49,7 @@ from .doc_upload import (upload_documentation_sets, upload_documentation_bundle,
                          DocumentationUploadOutcome, SetUploadOutcome, UploadProvenance,
                          UploadResult, DEFAULT_UPLOAD_TIMEOUT, DEFAULT_IN_PROGRESS_ATTEMPTS,
                          MAX_RETRY_AFTER_SECONDS)
+
+from .doc_pipeline import (read_documentation_configuration_file, configured_documentation_sets,
+                           documentation_versions, documentation_pom_version,
+                           documentation_commit_timestamp)
