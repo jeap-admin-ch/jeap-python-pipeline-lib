@@ -62,8 +62,8 @@ class SetOutcome:
     documentation_set: DocumentationSet
     structure: StructureReport
     content: Optional[ContentReport] = None
-    diagrams: Optional[DiagramReport] = None
     report: str = ""
+    diagrams: Optional[DiagramReport] = None
 
     @property
     def accepted(self) -> bool:
@@ -154,8 +154,9 @@ def _validate_one(documentation_set: DocumentationSet,
     # so the tree is walked once with them and the list the doc service is asked about derived from
     # it - rather than walking the folder twice and risking two different answers.
     walked = collect_documentation_paths(root, keep_diagram_sources=True)
-    diagrams = check_diagram_sources(root, walked, deepen=deepen_diagram_history)
-    sources = {pair.source for pair in diagram_pairs_of(walked)}
+    diagrams = check_diagram_sources(root, walked, deepen=deepen_diagram_history,
+                                     source_format=documentation_set.source_format)
+    sources = {pair.source for pair in diagram_pairs_of(walked, documentation_set.source_format)}
     paths = [path for path in walked if path not in sources]
 
     content = None

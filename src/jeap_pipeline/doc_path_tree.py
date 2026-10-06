@@ -52,7 +52,8 @@ def documentation_set_root(path: str, working_directory: str = ".") -> str:
     return f"{working_directory.rstrip('/')}/{normalized}" if normalized else working_directory
 
 
-def collect_documentation_paths(root: str, keep_diagram_sources: bool = False) -> List[str]:
+def collect_documentation_paths(root: str, keep_diagram_sources: bool = False,
+                                source_format: str = "markdown") -> List[str]:
     """
     List every file below `root` as a relative path, the way an upload would carry it.
 
@@ -71,6 +72,8 @@ def collect_documentation_paths(root: str, keep_diagram_sources: bool = False) -
         keep_diagram_sources (bool, optional): Whether to keep the diagram sources in the list.
             Defaults to `False`, the list an upload sends. The diagram check needs them, since they
             are what it is about.
+        source_format (str): Markdown by default. Pass "html" for a microsite to preserve
+            all assets, or "asciidoc" to preserve AsciiDoc documents alongside images.
 
     Raises:
         DocumentationPathError: If `root` does not exist or is not a directory. A typo in the
@@ -102,5 +105,5 @@ def collect_documentation_paths(root: str, keep_diagram_sources: bool = False) -
     paths = sorted(paths)
     if keep_diagram_sources:
         return paths
-    sources = set(diagram_sources_of(paths))
+    sources = set(diagram_sources_of(paths, source_format))
     return [path for path in paths if path not in sources]

@@ -170,6 +170,17 @@ this check for free:
 
 ## The diagram checks
 
+These checks apply to committed Markdown and AsciiDoc documentation. HTML microsites retain all
+their assets and do not use inferred source/image pairing: their permitted asset types are open-ended,
+so `overview.html`, `overview.js` or a font next to `overview.svg` must not be dropped as editor source.
+When calling collection/pairing helpers directly for a microsite, pass `source_format="html"`.
+
+Committed AsciiDoc inputs are checked **before conversion**, using the original files and Git paths.
+`prepare_documentation_config(..., deepen_diagram_history=True)` permits fetching missing history.
+Entries under `generated-docs` do not undergo this pre-conversion history check: their source is build
+output rather than committed documentation. Direct `convert_asciidoc` callers use the same default
+check; `check_committed_diagrams=False` explicitly selects generated input.
+
 A diagram is **two files committed side by side in one folder**: the editable source the author works in,
 `images/overview.drawio`, and the image exported from it, `images/overview.svg`, which is what the page embeds.
 Nothing renders the diagram in the pipeline - that was the decision, so that the picture is already visible in
