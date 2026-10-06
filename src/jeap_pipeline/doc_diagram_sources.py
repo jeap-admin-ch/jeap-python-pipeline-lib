@@ -92,7 +92,7 @@ class DiagramReport:
         return not self.findings
 
 
-def diagram_pairs_of(paths: Sequence[str]) -> List[DiagramPair]:
+def diagram_pairs_of(paths: Sequence[str], source_format: str = "markdown") -> List[DiagramPair]:
     """
     Find the diagram source/image pairs in a documentation set.
 
@@ -119,10 +119,16 @@ def diagram_pairs_of(paths: Sequence[str]) -> List[DiagramPair]:
     Args:
         paths (Sequence[str]): The relative paths of the set, as `collect_documentation_paths`
             returns them - forward slashes, relative to the set's folder.
+        source_format (str): Markdown by default. HTML disables inference to preserve its
+            open-ended asset types; AsciiDoc also preserves .adoc and .asciidoc documents.
 
     Returns:
         List[DiagramPair]: One pair per source found, ordered by source path.
     """
+    # HTML microsites have an open-ended asset vocabulary, not Markdown's allowlist.
+    # A same-stem HTML/CSS/JS/font file cannot safely be inferred to be editor source.
+    if source_format == "html":
+        return []
     by_folder: Dict[str, List[str]] = {}
     for path in paths:
         by_folder.setdefault(posix_dirname(path), []).append(path)
@@ -134,7 +140,8 @@ def diagram_pairs_of(paths: Sequence[str]) -> List[DiagramPair]:
             continue
         for member in members:
             extension = _extension_of(member)
-            if not extension or extension in PUBLISHED_EXTENSIONS:
+            if not extension or extension in PUBLISHED_EXTENSIONS or (
+                    source_format == "asciidoc" and extension in {"adoc", "asciidoc"}):
                 continue
             image = _image_claiming(_name_of(member), images)
             if image is not None:
@@ -143,7 +150,7 @@ def diagram_pairs_of(paths: Sequence[str]) -> List[DiagramPair]:
     return sorted(pairs, key=lambda pair: pair.source)
 
 
-def diagram_sources_of(paths: Sequence[str]) -> List[str]:
+def diagram_sources_of(paths: Sequence[str], source_format: str = "markdown") -> List[str]:
     """
     The diagram sources in a documentation set - the paths an upload leaves out.
 
@@ -153,11 +160,12 @@ def diagram_sources_of(paths: Sequence[str]) -> List[str]:
 
     Args:
         paths (Sequence[str]): The relative paths of the set.
+        source_format (str): The input format; HTML keeps all assets.
 
     Returns:
         List[str]: The relative paths of the sources, sorted.
     """
-    return [pair.source for pair in diagram_pairs_of(paths)]
+    return [pair.source for pair in diagram_pairs_of(paths, source_format)]
 
 
 def posix_dirname(path: str) -> str:
@@ -168,7 +176,8 @@ def posix_dirname(path: str) -> str:
 
 def check_diagram_sources(root: str,
                           paths: Sequence[str],
-                          deepen: bool = False) -> DiagramReport:
+                          deepen: bool = False,
+                          source_format: str = "markdown") -> DiagramReport:
     """
     Check that every diagram of a documentation set was exported after it was last edited.
 
@@ -191,12 +200,13 @@ def check_diagram_sources(root: str,
             enough to date the diagrams. Defaults to `False`, which reports the set as undatable
             instead; a pipeline that checks out shallowly passes `True`. Only the sets that actually
             have a diagram ever cause a fetch.
+        source_format (str): The input format used for pairing; HTML is not checked.
 
     Returns:
         DiagramReport: The findings, how many pairs were checked, and how many were not committed
             yet.
     """
-    pairs = diagram_pairs_of(paths)
+    pairs = diagram_pairs_of(paths, source_format)
     if not pairs:
         return DiagramReport(pairs_checked=0)
 
@@ -297,10 +307,10 @@ def _last_commit(root: str, path: str) -> Optional[Tuple[str, int, str]]:
 
 def _shallow_boundary(root: str) -> FrozenSet[str]:
     """The commits a shallow history is grafted at. Empty for a complete checkout."""
-    completed = _git(root, "rev-parse", "--absolute-git-dir")
+    completed = _git(root, "rev-parse", "--path-format=absolute", "--git-path", "shallow")
     if completed.returncode != 0:
         return frozenset()
-    shallow = os.path.join(completed.stdout.strip(), "shallow")
+    shallow = completed.stdout.strip()
     if not os.path.isfile(shallow):
         return frozenset()
     with open(shallow, "r", encoding="utf-8") as handle:

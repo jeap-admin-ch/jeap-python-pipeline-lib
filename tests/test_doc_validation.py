@@ -171,7 +171,7 @@ class DiagramTest(ValidateDocumentationSetsTestCase):
         self.diagrams.assert_called_once_with(
             "docs",
             ["architecture.md", "images/overview.drawio", "images/overview.svg"],
-            deepen=False)
+            deepen=False, source_format="markdown")
         self.assertEqual(["architecture.md", "images/overview.svg"],
                          self.structure.call_args.args[3],
                          "the doc service is asked about the set without the editor files")

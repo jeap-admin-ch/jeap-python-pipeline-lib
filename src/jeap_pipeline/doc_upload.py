@@ -465,7 +465,7 @@ def _prepare(documentation_set: DocumentationSet,
                                                       version_source),
             upload_id_of(documentation_set, upload_id_seed),
             root,
-            collect_documentation_paths(root))
+            collect_documentation_paths(root, source_format=documentation_set.source_format))
 
 
 def _upload_one(doc_service_url: str,

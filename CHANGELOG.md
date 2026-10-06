@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.12.1] - 2026-10-07
+
+### Fixed
+
+- Preserve HTML microsite assets and the positional `SetOutcome` constructor contract.
+- Check committed AsciiDoc diagrams before conversion and resolve shallow history correctly in linked worktrees.
+
 ## [1.12.0] - 2026-10-07
 
 ### Added

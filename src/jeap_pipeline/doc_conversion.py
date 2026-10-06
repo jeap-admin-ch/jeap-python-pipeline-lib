@@ -17,6 +17,7 @@ from xml.etree import ElementTree as ET
 from markdown_it import MarkdownIt
 
 from .doc_path_tree import collect_documentation_paths
+from .doc_diagram_sources import check_diagram_sources, diagram_sources_of
 
 
 class DocumentationConversionError(ValueError):
@@ -25,12 +26,16 @@ class DocumentationConversionError(ValueError):
 
 def convert_asciidoc(input_directory: str, output_directory: str,
                      entry: str = "all-docs.adoc", node: str = "node",
-                     pandoc: str = "pandoc") -> list[str]:
+                     pandoc: str = "pandoc", deepen_diagram_history: bool = False,
+                     check_committed_diagrams: bool = True) -> list[str]:
     """Convert an entry document to Markdown pages in an empty output directory.
 
     Top-level sections become pages. Complex two-column canvases become labelled sections;
     simple tables stay tables. Local assets are copied, diagrams become PlantUML fences.
     The caller places this directory in the target chapter and validates the resulting set.
+    Committed diagrams are checked against their original Git paths before staging. Set
+    `deepen_diagram_history=True` for shallow checkouts; use `check_committed_diagrams=False`
+    only for generated input whose files have no committed history.
     """
     source = Path(input_directory).resolve()
     target = Path(output_directory).resolve()
@@ -39,7 +44,15 @@ def convert_asciidoc(input_directory: str, output_directory: str,
     entry_path = Path(entry)
     if entry_path.is_absolute() or ".." in entry_path.parts or "\\" in entry:
         raise DocumentationConversionError("'entry' must be a relative path inside the input directory.")
-    paths = collect_documentation_paths(str(source))
+    paths = collect_documentation_paths(str(source), keep_diagram_sources=True)
+    if check_committed_diagrams:
+        report = check_diagram_sources(str(source), paths, deepen=deepen_diagram_history,
+                                       source_format="asciidoc")
+        if not report.accepted:
+            raise DocumentationConversionError("\n".join(
+                f"{finding.code}: {finding.message}" for finding in report.findings))
+    sources = set(diagram_sources_of(paths, source_format="asciidoc"))
+    paths = [path for path in paths if path not in sources]
     if entry not in paths:
         raise DocumentationConversionError(f"Entry document not found: {source / entry}")
     if target.exists() and any(target.iterdir()):

@@ -17,7 +17,8 @@ def requires_asciidoc_conversion(configuration: dict) -> bool:
 
 def prepare_documentation_config(configuration: dict, output_directory: str,
                                   working_directory: str = ".", node: str = "node",
-                                  pandoc: str = "pandoc") -> dict:
+                                  pandoc: str = "pandoc",
+                                  deepen_diagram_history: bool = False) -> dict:
     """Convert AsciiDoc entries and return configuration for existing validation and upload.
 
     Output is relative to the checkout and must be empty. The returned paths are also relative
@@ -26,6 +27,8 @@ def prepare_documentation_config(configuration: dict, output_directory: str,
     The layout is inferred from docs or generated-docs; exactly one must be present.
     Each generated-docs entry names its own subject.
     Build configuration outside generated-docs is preserved without interpreting it.
+    Committed AsciiDoc diagrams are validated before conversion. `deepen_diagram_history`
+    allows the check to fetch history only when a pair needs it; generated input skips it.
     """
     key = _entries_key(configuration)
     prepared, conversions = _normalize(configuration, key)
@@ -44,7 +47,9 @@ def prepare_documentation_config(configuration: dict, output_directory: str,
     for index, entry in conversions:
         set_root = output / f"set-{index}"
         convert_asciidoc(str(root / entry["path"]), str(set_root / entry["location"]),
-                         entry.get("entry", "all-docs.adoc"), node, pandoc)
+                         entry.get("entry", "all-docs.adoc"), node, pandoc,
+                         deepen_diagram_history=deepen_diagram_history,
+                         check_committed_diagrams=key == "docs")
         prepared[key][index]["path"] = set_root.relative_to(root).as_posix()
     return prepared
 
