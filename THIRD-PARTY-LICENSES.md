@@ -12,7 +12,7 @@
 | exceptiongroup     | 1.3.1       | MIT License                                                  |
 | id                 | 1.6.1       | Apache Software License                                      |
 | importlib_metadata | 9.0.1       | Apache-2.0                                                   |
-| iniconfig          | 2.3.0       | MIT                                                          |
+| iniconfig          | 2.3.1       | MIT                                                          |
 | jaraco.classes     | 3.4.0       | MIT License                                                  |
 | jaraco.context     | 6.1.2       | MIT                                                          |
 | jmespath           | 1.1.0       | MIT License                                                  |
