@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.12.2] - 2026-10-07
+
+### Fixed
+
+- Never treat a publishable page or browser code (`.mdx`, `.html`, `.js`, `.css`, ...) as a diagram
+  source, so an MDX page beside an image is neither pruned nor reported stale when only its text changes.
+- Pair every export format of one source, so a stale `flow.svg` is reported even when `flow.png` was updated.
+
 ## [1.12.1] - 2026-10-07
 
 ### Fixed

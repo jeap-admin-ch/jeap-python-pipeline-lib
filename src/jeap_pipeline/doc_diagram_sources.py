@@ -44,6 +44,19 @@ PUBLISHED_EXTENSIONS: FrozenSet[str] = frozenset({
 #: The published extensions that are pictures. Only a picture can have been exported from a source.
 IMAGE_EXTENSIONS: FrozenSet[str] = frozenset({"svg", "png", "jpg", "jpeg", "gif", "webp", "avif"})
 
+#: Extensions that are never somebody's diagram source, whatever a site publishes: page types, a
+#: document a site renders on its own origin, and code a site or a browser runs. The jEAP doc
+#: service keeps the same list for the same reason (`MarkdownAssetRules.isNeverAllowed`), because a
+#: page or a script beside `overview.svg` is a page, not an editor file. Without it the open-ended
+#: rule - anything not published is a candidate source - would delete an `overview.mdx` page and
+#: fail the build when only its text changed.
+NEVER_SOURCE_EXTENSIONS: FrozenSet[str] = frozenset({
+    "md", "mdx",
+    "html", "htm", "xhtml", "shtml",
+    "js", "mjs", "cjs", "jsx", "ts", "tsx", "css",
+    "adoc", "asciidoc",
+})
+
 #: How far the history is deepened per round before the whole of it is fetched. A diagram that was
 #: touched recently - the usual case - is dated by the first round.
 _DEEPEN_ROUNDS: Tuple[int, ...] = (64, 256, 1024)
@@ -97,24 +110,29 @@ def diagram_pairs_of(paths: Sequence[str], source_format: str = "markdown") -> L
     Find the diagram source/image pairs in a documentation set.
 
     A file is the source of an image when, **in the same folder**, there is an image file whose stem
-    it extends - its name is `<image-stem>.<anything>` - and its own extension is not one the doc
-    service publishes:
+    it extends - its name is `<image-stem>.<anything>` - and its own extension is neither one the
+    doc service publishes nor one that is never a source (a page type or browser code, see
+    `NEVER_SOURCE_EXTENSIONS`):
 
-    | In one folder                      | Verdict                                              |
-    |------------------------------------|------------------------------------------------------|
-    | `overview.svg` + `overview.drawio` | `overview.drawio` is the source                      |
-    | `flow.png` + `flow.drawio.xml`     | `flow.drawio.xml` is the source                      |
-    | `report.svg` + `report.pdf`        | not a pair - a `.pdf` is published, so it is an asset |
-    | `diagram.svg` + `diagram.png`      | not a pair - both are published                      |
+    | In one folder                         | Verdict                                              |
+    |---------------------------------------|------------------------------------------------------|
+    | `overview.svg` + `overview.drawio`    | `overview.drawio` is the source                      |
+    | `flow.png` + `flow.drawio.xml`        | `flow.drawio.xml` is the source                      |
+    | `report.svg` + `report.pdf`           | not a pair - a `.pdf` is published, so it is an asset |
+    | `diagram.svg` + `diagram.png`         | not a pair - both are published                      |
+    | `overview.svg` + `overview.mdx`       | not a pair - an MDX page is never an editor file      |
 
     The rule is about the name and not about a list of known diagram tools on purpose: hand-exported
     images were chosen precisely so that the convention holds for any editor, and an allowlist of
     tools would need a release of this library for every new one. Requiring the companion to be an
-    image, and the candidate to be something the doc service would refuse anyway, is what keeps the
-    rule from swallowing a real asset.
+    image, and the candidate to be something no site publishes or runs, is what keeps the rule from
+    swallowing a real asset or page.
 
-    When several images could claim one source the most specific wins: with `flow.svg` and
-    `flow.detail.svg` both present, `flow.detail.drawio` belongs to `flow.detail.svg`.
+    When several images could claim one source the most specific stem wins: with `flow.svg` and
+    `flow.detail.svg` both present, `flow.detail.drawio` belongs to `flow.detail.svg`. **Every
+    export format of that stem is paired**, so one `flow.drawio` beside `flow.png` and `flow.svg`
+    yields a pair per image and a stale export is found whichever format the page embeds.
+
 
     Args:
         paths (Sequence[str]): The relative paths of the set, as `collect_documentation_paths`
@@ -140,14 +158,13 @@ def diagram_pairs_of(paths: Sequence[str], source_format: str = "markdown") -> L
             continue
         for member in members:
             extension = _extension_of(member)
-            if not extension or extension in PUBLISHED_EXTENSIONS or (
-                    source_format == "asciidoc" and extension in {"adoc", "asciidoc"}):
+            if (not extension or extension in PUBLISHED_EXTENSIONS
+                    or extension in NEVER_SOURCE_EXTENSIONS):
                 continue
-            image = _image_claiming(_name_of(member), images)
-            if image is not None:
+            for image in _images_claiming(_name_of(member), images):
                 pairs.append(DiagramPair(source=member, image=image))
 
-    return sorted(pairs, key=lambda pair: pair.source)
+    return sorted(pairs, key=lambda pair: (pair.source, pair.image))
 
 
 def diagram_sources_of(paths: Sequence[str], source_format: str = "markdown") -> List[str]:
@@ -165,7 +182,8 @@ def diagram_sources_of(paths: Sequence[str], source_format: str = "markdown") ->
     Returns:
         List[str]: The relative paths of the sources, sorted.
     """
-    return [pair.source for pair in diagram_pairs_of(paths, source_format)]
+    # One source can have several export formats, so the same source appears in several pairs.
+    return sorted({pair.source for pair in diagram_pairs_of(paths, source_format)})
 
 
 def posix_dirname(path: str) -> str:
@@ -296,17 +314,19 @@ def _stem_of(name: str) -> str:
     return name[:separator] if separator > 0 else name
 
 
-def _image_claiming(name: str, images: Sequence[str]) -> Optional[str]:
-    """The image whose stem `name` extends, the longest stem winning, or `None`."""
-    claimed: Optional[str] = None
+def _images_claiming(name: str, images: Sequence[str]) -> List[str]:
+    """Every export format of the most specific image stem `name` extends, sorted."""
     claimed_length = -1
     for image in images:
         stem = _stem_of(_name_of(image))
         if stem == name or not name.startswith(f"{stem}."):
             continue
-        if len(stem) > claimed_length:
-            claimed, claimed_length = image, len(stem)
-    return claimed
+        claimed_length = max(claimed_length, len(stem))
+    if claimed_length < 0:
+        return []
+    return sorted(image for image in images
+                  if len(_stem_of(_name_of(image))) == claimed_length
+                  and name.startswith(f"{_stem_of(_name_of(image))}."))
 
 
 def _git(root: str, *arguments: str) -> subprocess.CompletedProcess:
