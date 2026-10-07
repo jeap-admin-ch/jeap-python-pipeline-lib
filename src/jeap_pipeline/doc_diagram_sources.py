@@ -177,16 +177,23 @@ def posix_dirname(path: str) -> str:
 def check_diagram_sources(root: str,
                           paths: Sequence[str],
                           deepen: bool = False,
-                          source_format: str = "markdown") -> DiagramReport:
+                          source_format: str = "markdown",
+                          referenced_images: Optional[Sequence[str]] = None) -> DiagramReport:
     """Check diagram freshness, reporting unavailable Git history instead of accepting it.
 
     `paths` contains unfiltered set-relative paths. `source_format` selects pairing rules;
     `deepen` permits fetching history only when a diagram pair requires it.
+    `referenced_images`, when supplied, selects already assigned pairs by image path;
+    it never changes the complete tree used to establish the original pairings.
     """
+    pairs = diagram_pairs_of(paths, source_format)
+    if referenced_images is not None:
+        referenced = set(referenced_images)
+        pairs = [pair for pair in pairs if pair.image in referenced]
     try:
-        return _check_diagram_sources(root, paths, deepen, source_format)
+        return _check_diagram_sources(root, pairs, deepen)
     except (OSError, subprocess.SubprocessError, ValueError, _HistoryError) as error:
-        return DiagramReport(pairs_checked=len(diagram_pairs_of(paths, source_format)), findings=[
+        return DiagramReport(pairs_checked=len(pairs), findings=[
             DiagramFinding(DiagramFindingCode.UNDATABLE_DIAGRAM_HISTORY,
                            f"Cannot verify diagram history: {error}")])
 
@@ -195,8 +202,7 @@ class _HistoryError(RuntimeError):
     """Git failed to supply a usable history answer."""
 
 
-def _check_diagram_sources(root: str, paths: Sequence[str], deepen: bool,
-                           source_format: str) -> DiagramReport:
+def _check_diagram_sources(root: str, pairs: Sequence[DiagramPair], deepen: bool) -> DiagramReport:
     """
     Check that every diagram of a documentation set was exported after it was last edited.
 
@@ -225,7 +231,6 @@ def _check_diagram_sources(root: str, paths: Sequence[str], deepen: bool,
         DiagramReport: The findings, how many pairs were checked, and how many were not committed
             yet.
     """
-    pairs = diagram_pairs_of(paths, source_format)
     if not pairs:
         return DiagramReport(pairs_checked=0)
 

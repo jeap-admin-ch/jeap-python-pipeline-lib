@@ -17,7 +17,7 @@ from xml.etree import ElementTree as ET
 from markdown_it import MarkdownIt
 
 from .doc_path_tree import collect_documentation_paths
-from .doc_diagram_sources import check_diagram_sources, diagram_sources_of, IMAGE_EXTENSIONS
+from .doc_diagram_sources import check_diagram_sources, diagram_sources_of
 
 
 class DocumentationConversionError(ValueError):
@@ -76,11 +76,8 @@ def convert_asciidoc(input_directory: str, output_directory: str,
         assets = _resolve_links_and_assets(pages, snapshot, sources)
         if check_committed_diagrams:
             referenced = {asset.relative_to(snapshot).as_posix() for asset in assets.values()}
-            checked_paths = [path for path in paths
-                             if Path(path).suffix.lower().lstrip(".") not in IMAGE_EXTENSIONS
-                             or path in referenced]
-            report = check_diagram_sources(str(source), checked_paths, deepen=deepen_diagram_history,
-                                           source_format="asciidoc")
+            report = check_diagram_sources(str(source), paths, deepen=deepen_diagram_history,
+                                           source_format="asciidoc", referenced_images=referenced)
             if not report.accepted:
                 raise DocumentationConversionError("\n".join(
                     f"{finding.code}: {finding.message}" for finding in report.findings))

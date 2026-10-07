@@ -171,6 +171,45 @@ def test_referenced_svg_is_checked_even_when_plantuml_source_is_also_rendered(tm
     assert not (tmp_path / "output").exists()
 
 
+@pytest.mark.parametrize("references", [("flow.svg",), ("flow.detail.svg",),
+                                       ("flow.svg", "flow.detail.svg")])
+def test_conversion_preserves_original_pairs_when_selecting_referenced_images(tmp_path, references):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    (repo / "all-docs.adoc").write_text(
+        "== Application\n\n" + "\n\n".join(f"image::{image}[]" for image in references))
+    for image in ("flow.svg", "flow.detail.svg"):
+        (repo / image).write_text('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    (repo / "flow.drawio").write_text("overview")
+    (repo / "flow.detail.drawio").write_text("detail")
+    commit(repo, "all diagrams exported")
+    (repo / "flow.detail.drawio").write_text("detail changed without export")
+    commit(repo, "stale detail", "2026-01-02T12:00:00Z")
+    output = tmp_path / "output"
+
+    if "flow.detail.svg" in references:
+        with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE") as error:
+            convert_asciidoc(str(repo), str(output), pandoc=os.getenv("PANDOC", "pandoc"))
+        assert "'flow.detail.drawio' was changed after 'flow.detail.svg'" in str(error.value)
+        assert "'flow.drawio' was changed" not in str(error.value)
+        assert not output.exists()
+    else:
+        convert_asciidoc(str(repo), str(output), pandoc=os.getenv("PANDOC", "pandoc"))
+        assert (output / "assets" / "flow.svg").is_file()
+        assert not (output / "assets" / "flow.detail.svg").exists()
+        assert not list(output.rglob("*.drawio"))
+
+
+def test_empty_reference_selection_checks_no_pairs_and_does_not_call_git(tmp_path):
+    with patch("jeap_pipeline.doc_diagram_sources._git") as history:
+        report = check_diagram_sources(str(tmp_path), ["flow.svg", "flow.drawio"],
+                                       deepen=True, referenced_images=[])
+    assert report.accepted
+    assert report.pairs_checked == 0
+    history.assert_not_called()
+
+
 def test_git_filename_queries_are_literal(tmp_path):
     repo = tmp_path / "repo"
     repo.mkdir()
