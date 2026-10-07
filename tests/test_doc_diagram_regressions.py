@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from jeap_pipeline.doc_conversion import DocumentationConversionError
+from jeap_pipeline.doc_conversion import DocumentationConversionError, convert_asciidoc
 from jeap_pipeline.doc_diagram_sources import check_diagram_sources, diagram_pairs_of
 from jeap_pipeline.doc_path_tree import collect_documentation_paths
 from jeap_pipeline.doc_preparation import prepare_documentation_config
@@ -68,14 +68,12 @@ def test_html_assets_survive_collection_and_validation(tmp_path):
     assert prepared[-1] == sorted(paths)
 
 
-def test_asciidoc_checks_original_history_before_starting_tools(tmp_path):
+def test_asciidoc_checks_original_history_before_writing_output(tmp_path):
     repo, docs = diagram_repo(tmp_path)
     config = {"system": "test", "docs": [{"path": "docs", "type": "system-docs",
               "template": "arc42", "source-format": "asciidoc", "location": "5-building-block-view"}]}
-    with patch("jeap_pipeline.doc_conversion._run") as tool:
-        with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE"):
-            prepare_documentation_config(config, "converted", str(repo))
-    tool.assert_not_called()
+    with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE"):
+        prepare_documentation_config(config, "converted", str(repo), pandoc=os.getenv("PANDOC", "pandoc"))
     assert not (repo / "converted").exists()
 
 
@@ -90,10 +88,9 @@ def test_shallow_asciidoc_input_is_deepened_before_rejecting_stale_export(tmp_pa
     subprocess.run(["git", "clone", "-q", "--depth", "1", repo.as_uri(), str(clone)], check=True)
     config = {"system": "test", "docs": [{"path": "docs", "type": "system-docs",
               "template": "arc42", "source-format": "asciidoc", "location": "5-building-block-view"}]}
-    with patch("jeap_pipeline.doc_conversion._run") as tool:
-        with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE"):
-            prepare_documentation_config(config, "converted", str(clone), deepen_diagram_history=True)
-    tool.assert_not_called()
+    with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE"):
+        prepare_documentation_config(config, "converted", str(clone), deepen_diagram_history=True,
+                                     pandoc=os.getenv("PANDOC", "pandoc"))
     assert git(clone, "rev-parse", "--is-shallow-repository") == "false"
 
 
@@ -132,3 +129,105 @@ def test_shallow_linked_worktree_is_detected_and_deepened(tmp_path):
     assert str(report.findings[0].code) == "UNDATABLE_DIAGRAM_HISTORY"
     report = check_diagram_sources(root, paths, deepen=True)
     assert str(report.findings[0].code) == "STALE_DIAGRAM_IMAGE"
+
+
+@pytest.mark.parametrize("reference", ["plantuml::components.puml[]",
+                                      "[source,plantuml]\n----\ninclude::components.puml[]\n----"])
+@pytest.mark.parametrize("generated", [False, True])
+@pytest.mark.parametrize("edit_source", [False, True])
+def test_source_rendered_plantuml_keeps_dependencies_and_ignores_unused_svg(
+        tmp_path, reference, generated, edit_source):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    (repo / "all-docs.adoc").write_text("== Application\n\n" + reference + "\n")
+    (repo / "components.puml").write_text("@startuml\nAlice -> Bob: original\n@enduml\n")
+    (repo / "components.svg").write_text("<svg/>")
+    commit(repo, "paired")
+    if edit_source:
+        (repo / "components.puml").write_text("@startuml\nAlice -> Bob: updated\n@enduml\n")
+        commit(repo, "source only", "2026-01-02T12:00:00Z")
+    output = tmp_path / "output"
+    convert_asciidoc(str(repo), str(output), pandoc=os.getenv("PANDOC", "pandoc"),
+                     check_committed_diagrams=not generated)
+    text = "\n".join(p.read_text() for p in output.glob("*.md"))
+    assert ("updated" if edit_source else "original") in text
+    assert not list(output.rglob("*.puml"))
+    assert not list(output.rglob("*.svg"))
+
+
+def test_referenced_svg_is_checked_even_when_plantuml_source_is_also_rendered(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    (repo / "all-docs.adoc").write_text("== Application\n\nplantuml::components.puml[]\n\nimage::components.svg[]\n")
+    (repo / "components.puml").write_text("@startuml\nAlice -> Bob\n@enduml\n")
+    (repo / "components.svg").write_text("<svg/>")
+    commit(repo, "paired")
+    (repo / "components.puml").write_text("@startuml\nAlice -> Bob: changed\n@enduml\n")
+    commit(repo, "stale export", "2026-01-02T12:00:00Z")
+    with pytest.raises(DocumentationConversionError, match="STALE_DIAGRAM_IMAGE"):
+        convert_asciidoc(str(repo), str(tmp_path / "output"), pandoc=os.getenv("PANDOC", "pandoc"))
+    assert not (tmp_path / "output").exists()
+
+
+def test_git_filename_queries_are_literal(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    for name in ("flow[1].drawio", "flow[1].svg", "flow1.svg"):
+        (repo / name).write_text("original")
+    commit(repo, "paired")
+    (repo / "flow[1].drawio").write_text("changed")
+    commit(repo, "stale", "2026-01-02T12:00:00Z")
+    (repo / "flow1.svg").write_text("unrelated new image")
+    commit(repo, "unrelated", "2026-01-03T12:00:00Z")
+    report = check_diagram_sources(str(repo), ["flow[1].drawio", "flow[1].svg", "flow1.svg"])
+    assert str(report.findings[0].code) == "STALE_DIAGRAM_IMAGE"
+
+
+@pytest.mark.parametrize("failure", ["log", "shallow-state", "shallow-path", "malformed-path", "ancestry"])
+def test_history_command_errors_are_not_accepted(tmp_path, failure):
+    from jeap_pipeline import doc_diagram_sources as diagrams
+    repo, docs = diagram_repo(tmp_path)
+    if failure == "ancestry":
+        git(repo, "-c", "user.name=Test", "-c", "user.email=test@example.org", "commit", "--amend", "--no-edit")
+    real_git = diagrams._git
+
+    def failing_git(root, *args):
+        if failure == "log" and args[0] == "log":
+            return SimpleNamespace(returncode=128, stdout="")
+        if args == ("rev-parse", "--is-shallow-repository"):
+            if failure == "shallow-state":
+                return SimpleNamespace(returncode=128, stdout="")
+            if failure in {"shallow-path", "malformed-path"}:
+                return SimpleNamespace(returncode=0, stdout="true\n")
+        if args == ("rev-parse", "--git-path", "shallow"):
+            return SimpleNamespace(returncode=128 if failure == "shallow-path" else 0,
+                                   stdout="--unsupported\n.git/shallow\n")
+        if failure == "ancestry" and args[0] == "merge-base":
+            return SimpleNamespace(returncode=128, stdout="")
+        return real_git(root, *args)
+
+    with patch.object(diagrams, "_git", side_effect=failing_git):
+        report = check_diagram_sources(str(docs), collect_documentation_paths(str(docs), keep_diagram_sources=True))
+    assert not report.accepted
+    assert str(report.findings[0].code) == "UNDATABLE_DIAGRAM_HISTORY"
+
+
+def test_relative_shallow_path_is_resolved_without_new_git_options(tmp_path):
+    from jeap_pipeline import doc_diagram_sources as diagrams
+    repo, _ = diagram_repo(tmp_path)
+    clone = tmp_path / "clone"
+    subprocess.run(["git", "clone", "-q", "--depth", "1", repo.as_uri(), str(clone)], check=True)
+    real_git = diagrams._git
+
+    def older_git(root, *args):
+        assert not any(arg.startswith("--path-format") for arg in args)
+        if args == ("rev-parse", "--git-path", "shallow"):
+            return SimpleNamespace(returncode=0, stdout="../.git/shallow\n")
+        return real_git(root, *args)
+
+    with patch.object(diagrams, "_git", side_effect=older_git):
+        report = check_diagram_sources(str(clone / "docs"), ["overview.drawio", "overview.svg"])
+    assert str(report.findings[0].code) == "UNDATABLE_DIAGRAM_HISTORY"

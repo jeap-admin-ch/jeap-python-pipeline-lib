@@ -27,7 +27,7 @@ def prepare_documentation_config(configuration: dict, output_directory: str,
     The layout is inferred from docs or generated-docs; exactly one must be present.
     Each generated-docs entry names its own subject.
     Build configuration outside generated-docs is preserved without interpreting it.
-    Committed AsciiDoc diagrams are validated before conversion. `deepen_diagram_history`
+    Referenced AsciiDoc image pairs are validated before output is written. `deepen_diagram_history`
     allows the check to fetch history only when a pair needs it; generated input skips it.
     """
     key = _entries_key(configuration)

@@ -95,7 +95,7 @@ Validate a repository's documentation before it is uploaded - see
 Diagram collection and pairing helpers accept `source_format` (default `markdown`). Pass `html`
 to retain all microsite assets; `asciidoc` also protects `.adoc` and `.asciidoc` input documents.
 `prepare_documentation_config` and `convert_asciidoc` accept `deepen_diagram_history` to check
-committed AsciiDoc pairs before conversion in shallow checkouts.
+referenced AsciiDoc image pairs against their original history before writing output in shallow checkouts.
 
 Upload a repository's documentation to the doc service - see [Documentation upload](doc-upload.md) for the
 bundle, the idempotency key and the answers.

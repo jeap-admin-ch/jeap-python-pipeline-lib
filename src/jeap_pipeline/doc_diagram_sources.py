@@ -178,6 +178,25 @@ def check_diagram_sources(root: str,
                           paths: Sequence[str],
                           deepen: bool = False,
                           source_format: str = "markdown") -> DiagramReport:
+    """Check diagram freshness, reporting unavailable Git history instead of accepting it.
+
+    `paths` contains unfiltered set-relative paths. `source_format` selects pairing rules;
+    `deepen` permits fetching history only when a diagram pair requires it.
+    """
+    try:
+        return _check_diagram_sources(root, paths, deepen, source_format)
+    except (OSError, subprocess.SubprocessError, ValueError, _HistoryError) as error:
+        return DiagramReport(pairs_checked=len(diagram_pairs_of(paths, source_format)), findings=[
+            DiagramFinding(DiagramFindingCode.UNDATABLE_DIAGRAM_HISTORY,
+                           f"Cannot verify diagram history: {error}")])
+
+
+class _HistoryError(RuntimeError):
+    """Git failed to supply a usable history answer."""
+
+
+def _check_diagram_sources(root: str, paths: Sequence[str], deepen: bool,
+                           source_format: str) -> DiagramReport:
     """
     Check that every diagram of a documentation set was exported after it was last edited.
 
@@ -287,7 +306,7 @@ def _image_claiming(name: str, images: Sequence[str]) -> Optional[str]:
 
 def _git(root: str, *arguments: str) -> subprocess.CompletedProcess:
     """Run git in the folder of the documentation set, never raising on a non-zero status."""
-    return subprocess.run(["git", "-C", root, *arguments],
+    return subprocess.run(["git", "--literal-pathspecs", "-C", root, *arguments],
                           capture_output=True, text=True, check=False, timeout=_GIT_TIMEOUT)
 
 
@@ -299,7 +318,9 @@ def _is_git_checkout(root: str) -> bool:
 def _last_commit(root: str, path: str) -> Optional[Tuple[str, int, str]]:
     """The commit that last touched `path`, as `(sha, unix timestamp, ISO date)`, or `None`."""
     completed = _git(root, "log", "-1", "--format=%H %ct %cI", "--", path)
-    if completed.returncode != 0 or not completed.stdout.strip():
+    if completed.returncode != 0:
+        raise _HistoryError(f"git log failed for '{path}' (exit {completed.returncode}).")
+    if not completed.stdout.strip():
         return None
     sha, timestamp, iso = completed.stdout.strip().split(" ", 2)
     return sha, int(timestamp), iso
@@ -307,14 +328,23 @@ def _last_commit(root: str, path: str) -> Optional[Tuple[str, int, str]]:
 
 def _shallow_boundary(root: str) -> FrozenSet[str]:
     """The commits a shallow history is grafted at. Empty for a complete checkout."""
-    completed = _git(root, "rev-parse", "--path-format=absolute", "--git-path", "shallow")
-    if completed.returncode != 0:
+    state = _git(root, "rev-parse", "--is-shallow-repository")
+    if state.returncode != 0 or state.stdout.strip() not in {"true", "false"}:
+        raise _HistoryError("Cannot determine whether the Git checkout is shallow.")
+    if state.stdout.strip() == "false":
         return frozenset()
-    shallow = completed.stdout.strip()
+    completed = _git(root, "rev-parse", "--git-path", "shallow")
+    value = completed.stdout.rstrip("\n")
+    if completed.returncode != 0 or not value or "\n" in value or value.startswith("--"):
+        raise _HistoryError("Cannot locate the Git shallow boundary file.")
+    shallow = os.path.join(root, value)
     if not os.path.isfile(shallow):
-        return frozenset()
+        raise _HistoryError("Shallow checkout has no readable shallow boundary file.")
     with open(shallow, "r", encoding="utf-8") as handle:
-        return frozenset(line.strip() for line in handle if line.strip())
+        boundary = frozenset(line.strip() for line in handle if line.strip())
+    if not boundary:
+        raise _HistoryError("Shallow boundary file is empty.")
+    return boundary
 
 
 def _boundary_dated(root: str, paths: Sequence[str]) -> List[str]:
@@ -368,4 +398,7 @@ def _is_stale(root: str,
         return True
     if source_timestamp < image_timestamp or source_sha == image_sha:
         return False
-    return _git(root, "merge-base", "--is-ancestor", image_sha, source_sha).returncode == 0
+    result = _git(root, "merge-base", "--is-ancestor", image_sha, source_sha)
+    if result.returncode not in (0, 1):
+        raise _HistoryError("Cannot compare diagram commit ancestry.")
+    return result.returncode == 0

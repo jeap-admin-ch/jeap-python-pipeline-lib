@@ -12,7 +12,8 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 ### Fixed
 
 - Preserve HTML microsite assets and the positional `SetOutcome` constructor contract.
-- Check committed AsciiDoc diagrams before conversion and resolve shallow history correctly in linked worktrees.
+- Preserve AsciiDoc/PlantUML input dependencies and check referenced exports against original history before writing output.
+- Query literal filenames, report Git failures, and resolve linked-worktree shallow paths without requiring Git 2.31.
 
 ## [1.12.0] - 2026-10-07
 

@@ -175,9 +175,12 @@ their assets and do not use inferred source/image pairing: their permitted asset
 so `overview.html`, `overview.js` or a font next to `overview.svg` must not be dropped as editor source.
 When calling collection/pairing helpers directly for a microsite, pass `source_format="html"`.
 
-Committed AsciiDoc inputs are checked **before conversion**, using the original files and Git paths.
+During AsciiDoc conversion, referenced exported images are checked **before any output is written**,
+using the original files and Git paths. The converter retains all input dependencies, including
+PlantUML sources and includes. An unused SVG beside a source-rendered PlantUML diagram is not dated;
+an SVG actually referenced by the document still receives the freshness check.
 `prepare_documentation_config(..., deepen_diagram_history=True)` permits fetching missing history.
-Entries under `generated-docs` do not undergo this pre-conversion history check: their source is build
+Entries under `generated-docs` do not undergo this history check: their source is build
 output rather than committed documentation. Direct `convert_asciidoc` callers use the same default
 check; `check_committed_diagrams=False` explicitly selects generated input.
 
