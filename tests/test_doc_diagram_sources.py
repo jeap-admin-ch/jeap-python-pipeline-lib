@@ -10,6 +10,7 @@ import os
 import subprocess
 import unittest
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from jeap_pipeline.doc_diagram_sources import (DiagramFindingCode, DiagramPair,
                                                check_diagram_sources, diagram_pairs_of,
@@ -185,18 +186,21 @@ class CommitDateTest(DocumentationSetFixture):
         self.assertIn("export it over the image next to it", finding.message)
 
     def test_a_source_and_an_image_committed_in_the_same_second_are_told_apart(self):
-        # Two commits pushed together share a committer date, so the dates alone cannot decide and
+        # Two commits can share a committer date, so the dates alone cannot decide and
         # the history has to: without the ancestry tiebreak this case passes and the check is blind
         # to anything committed within a second of the export.
-        self.edit_the_source_only()
-        source = self.git("log", "-1", "--format=%ct", "--", "docs/images/overview.drawio")
         image = self.git("log", "-1", "--format=%ct", "--", "docs/images/overview.svg")
+        # Reuse the image's date explicitly, even if creating the next commit takes a second.
+        with patch.dict(os.environ, {"GIT_COMMITTER_DATE": f"@{image.stdout.strip()} +0000"}):
+            self.edit_the_source_only()
+        source = self.git("log", "-1", "--format=%ct", "--", "docs/images/overview.drawio")
         self.assertEqual(source.stdout.strip(), image.stdout.strip(),
                          "the fixture is meant to produce two commits in one second")
 
         report = check_diagram_sources(self.root, self.paths())
 
         self.assertFalse(report.accepted)
+        self.assertEqual(DiagramFindingCode.STALE_DIAGRAM_IMAGE, report.findings[0].code)
 
     def test_re_exporting_the_image_accepts_the_diagram_again(self):
         self.edit_the_source_only()
