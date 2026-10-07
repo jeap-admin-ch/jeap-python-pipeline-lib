@@ -179,6 +179,10 @@ During AsciiDoc conversion, referenced exported images are checked **before any 
 using the original files and Git paths. The converter retains all input dependencies, including
 PlantUML sources and includes. An unused SVG beside a source-rendered PlantUML diagram is not dated;
 an SVG actually referenced by the document still receives the freshness check.
+Pairings are established from the complete input tree before selecting referenced images. For
+example, `flow.detail.drawio` stays assigned to `flow.detail.svg` even when only `flow.svg` is
+referenced. Direct checker callers can pass `referenced_images` with set-relative image paths;
+omitting it checks all pairs, while an empty list checks none.
 `prepare_documentation_config(..., deepen_diagram_history=True)` permits fetching missing history.
 Entries under `generated-docs` do not undergo this history check: their source is build
 output rather than committed documentation. Direct `convert_asciidoc` callers use the same default
