@@ -25,7 +25,8 @@ from .oauth_token import fetch_client_credentials_token, OAuthTokenError
 from .doc_path_tree import collect_documentation_paths, DocumentationPathError
 from .doc_diagram_sources import (check_diagram_sources, diagram_pairs_of, diagram_sources_of,
                                   DiagramReport, DiagramFinding, DiagramFindingCode, DiagramPair,
-                                  IMAGE_EXTENSIONS, PUBLISHED_EXTENSIONS)
+                                  IMAGE_EXTENSIONS, PUBLISHED_EXTENSIONS,
+                                  NEVER_SOURCE_EXTENSIONS)
 from .doc_content_validation import (validate_documentation_content, ContentReport, ContentFinding,
                                      ContentFindingCode, ALLOWED_FRONT_MATTER_KEYS,
                                      DEFAULT_MAX_FINDINGS)

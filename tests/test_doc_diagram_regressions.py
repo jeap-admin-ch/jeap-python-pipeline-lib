@@ -8,7 +8,8 @@ from unittest.mock import patch
 import pytest
 
 from jeap_pipeline.doc_conversion import DocumentationConversionError, convert_asciidoc
-from jeap_pipeline.doc_diagram_sources import check_diagram_sources, diagram_pairs_of
+from jeap_pipeline.doc_diagram_sources import (check_diagram_sources, diagram_pairs_of,
+                                               diagram_sources_of)
 from jeap_pipeline.doc_path_tree import collect_documentation_paths
 from jeap_pipeline.doc_preparation import prepare_documentation_config
 from jeap_pipeline.doc_service_operations import DocumentationSet
@@ -208,6 +209,52 @@ def test_empty_reference_selection_checks_no_pairs_and_does_not_call_git(tmp_pat
     assert report.accepted
     assert report.pairs_checked == 0
     history.assert_not_called()
+
+
+@pytest.mark.parametrize("page", ["overview.mdx", "overview.html", "overview.htm",
+                                  "overview.js", "overview.mjs", "overview.jsx",
+                                  "overview.ts", "overview.tsx", "overview.css"])
+def test_pages_and_browser_code_are_never_diagram_sources(tmp_path, page):
+    paths = [page, "overview.svg"]
+    for path in paths:
+        (tmp_path / path).write_text("content")
+    assert diagram_pairs_of(paths) == []
+    assert diagram_sources_of(paths) == []
+    assert collect_documentation_paths(str(tmp_path)) == sorted(paths)
+
+
+def test_every_export_format_of_one_source_is_paired_and_listed_once():
+    paths = ["flow.drawio", "flow.png", "flow.svg"]
+    assert [(pair.source, pair.image) for pair in diagram_pairs_of(paths)] == [
+        ("flow.drawio", "flow.png"), ("flow.drawio", "flow.svg")]
+    assert diagram_sources_of(paths) == ["flow.drawio"]
+
+
+def test_a_stale_export_format_is_reported_even_when_another_is_current(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git(repo, "init", "-q", "-b", "main")
+    for name, content in (("flow.drawio", "original"), ("flow.png", "PNG"), ("flow.svg", "<svg/>")):
+        (repo / name).write_text(content)
+    commit(repo, "all formats exported")
+    (repo / "flow.drawio").write_text("reworked")
+    (repo / "flow.png").write_text("PNG updated")
+    commit(repo, "source and png only", "2026-01-02T12:00:00Z")
+
+    report = check_diagram_sources(str(repo), ["flow.drawio", "flow.png", "flow.svg"])
+
+    assert not report.accepted
+    assert [str(finding.code) for finding in report.findings] == ["STALE_DIAGRAM_IMAGE"]
+    assert "'flow.svg'" in report.findings[0].message
+
+
+def test_overlapping_stems_still_pair_per_export_format():
+    paths = ["flow.drawio", "flow.png", "flow.svg",
+             "flow.detail.drawio", "flow.detail.png", "flow.detail.svg"]
+    assert [(pair.source, pair.image) for pair in diagram_pairs_of(paths)] == [
+        ("flow.detail.drawio", "flow.detail.png"), ("flow.detail.drawio", "flow.detail.svg"),
+        ("flow.drawio", "flow.png"), ("flow.drawio", "flow.svg")]
+
 
 
 def test_git_filename_queries_are_literal(tmp_path):

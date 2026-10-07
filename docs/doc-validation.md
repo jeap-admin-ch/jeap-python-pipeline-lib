@@ -179,6 +179,12 @@ During AsciiDoc conversion, referenced exported images are checked **before any 
 using the original files and Git paths. The converter retains all input dependencies, including
 PlantUML sources and includes. An unused SVG beside a source-rendered PlantUML diagram is not dated;
 an SVG actually referenced by the document still receives the freshness check.
+A page type or browser code (`.mdx`, `.html`, `.js`, `.ts`, `.css`, ...) is **never** a diagram
+source: the doc service keeps the same list for the same reason, so a page beside an image is
+neither excluded from an upload nor dated against it. Every export format of one source is paired,
+so `flow.drawio` beside `flow.png` and `flow.svg` is checked against both and a stale export is
+found whichever format the page embeds.
+
 Pairings are established from the complete input tree before selecting referenced images. For
 example, `flow.detail.drawio` stays assigned to `flow.detail.svg` even when only `flow.svg` is
 referenced. Direct checker callers can pass `referenced_images` with set-relative image paths;
@@ -214,6 +220,7 @@ its name is `<image-stem>.<anything>` - and its own extension is not one the doc
 | `overview.svg` + `overview.drawio` | `overview.drawio` is the source                         |
 | `flow.png` + `flow.drawio.xml`     | `flow.drawio.xml` is the source                         |
 | `report.svg` + `report.pdf`        | not a pair - a `.pdf` is published, so it is an asset   |
+| `overview.svg` + `overview.mdx`    | not a pair - an MDX page is never an editor file        |
 | `diagram.svg` + `diagram.png`      | not a pair - both are published                         |
 
 The rule is about the name and not about a list of known diagram tools on purpose: hand-exported images were
