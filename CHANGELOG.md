@@ -15,8 +15,8 @@ Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
   message contracts. The Message Contract Service then registers the deployment instead of ignoring it, so that the
   contracts of the previously deployed version are no longer reported as deployed after an application has removed its
   last producer or consumer. Requires jeap-message-contract-service 12.11.0 or later: if the service answers anything
-  other than status 201 for the declaration, it had no effect and a `RuntimeError` is raised rather than reporting a
-  successful registration.
+  other than status 201 for the declaration, it had no effect and `MessageContractDeclarationIgnoredError` is raised
+  rather than reporting a successful registration.
 
 ## [1.12.2] - 2026-10-07
 

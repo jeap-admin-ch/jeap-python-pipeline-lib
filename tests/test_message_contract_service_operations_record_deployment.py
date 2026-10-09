@@ -3,7 +3,8 @@ from unittest.mock import patch, MagicMock
 
 from requests.auth import HTTPBasicAuth
 
-from src.jeap_pipeline.message_contract_service_operations import record_deployment
+from src.jeap_pipeline.message_contract_service_operations import (MessageContractDeclarationIgnoredError,
+                                                                   record_deployment)
 
 
 class TestRecordDeployment(unittest.TestCase):
@@ -61,7 +62,7 @@ class TestRecordDeployment(unittest.TestCase):
         mock_response.text = "Deployment ignored because appName and/or appVersion are unknown"
         mock_requests_put.return_value = mock_response
 
-        with self.assertRaises(RuntimeError) as context:
+        with self.assertRaises(MessageContractDeclarationIgnoredError) as context:
             record_deployment(
                 mcs_url="http://mock-mcs-url",
                 user="test_user",

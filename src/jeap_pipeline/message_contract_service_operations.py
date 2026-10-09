@@ -2,6 +2,10 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 
+class MessageContractDeclarationIgnoredError(Exception):
+    """Raised when the Message Contract Service did not act on a declaration sent with a deployment."""
+
+
 class CompatibilityResult:
     def __init__(self, compatible: bool, message: str):
         self.compatible = compatible
@@ -44,9 +48,9 @@ def record_deployment(mcs_url: str, user: str, password: str, app_name: str, app
 
     Raises:
         requests.HTTPError: The Message Contract Service answered with an error status.
-        RuntimeError: The declaration that the application version has no message contracts had no effect, either
-            because the Message Contract Service does not support it yet or because it does not know the application
-            name.
+        MessageContractDeclarationIgnoredError: The declaration that the application version has no message contracts
+            had no effect, either because the Message Contract Service does not support it yet or because it does not
+            know the application name. The deployment has not been recorded.
     """
     mcs_record_deployment_url = f"{mcs_url}/api/deployments/{app_name}/{app_version}/{environment}"
     params = {"noMessageContracts": "true"} if no_message_contracts else None
@@ -67,7 +71,7 @@ def record_deployment(mcs_url: str, user: str, password: str, app_name: str, app
     response.raise_for_status()
 
     if no_message_contracts and response.status_code != 201:
-        raise RuntimeError(
+        raise MessageContractDeclarationIgnoredError(
             f"The Message Contract Service did not register the deployment of {app_name} {app_version} on "
             f"{environment} declared to have no message contracts (status {response.status_code}): "
             f"{response.text}. Check that the application name is correct and that the Message Contract Service "
