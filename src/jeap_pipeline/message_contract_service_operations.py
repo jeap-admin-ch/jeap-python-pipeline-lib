@@ -30,7 +30,7 @@ def get_compatibility(mcs_url: str, user: str, password: str, app_name: str, app
     return CompatibilityResult(compatible=response_data['compatible'], message=response_data['message'])
 
 def record_deployment(mcs_url: str, user: str, password: str, app_name: str, app_version: str, environment: str,
-                      no_message_contracts: bool = False):
+                      *, no_message_contracts: bool = False):
     """
     Record the deployment of an application version on an environment in the Message Contract Service.
 
