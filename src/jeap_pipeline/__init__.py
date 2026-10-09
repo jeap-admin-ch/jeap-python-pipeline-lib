@@ -54,3 +54,4 @@ from .doc_upload import (upload_documentation_sets, upload_documentation_bundle,
 from .doc_pipeline import (read_documentation_configuration_file, configured_documentation_sets,
                            documentation_versions, documentation_pom_version,
                            documentation_commit_timestamp)
+from .message_contract_service_operations import MessageContractDeclarationIgnoredError

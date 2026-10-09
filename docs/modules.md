@@ -50,6 +50,13 @@ Talk to the Pact Broker from build and deployment pipelines.
 | `get_app_name_for_message_contract` | Resolve the app name used for message contracts. |
 | `get_compatibility`, `record_deployment`, `delete_deployments` (`message_contract_service_operations`) | Query compatibility and record / remove deployments. |
 
+These three are imported from `jeap_pipeline.message_contract_service_operations`, not from the package root, where
+`record_deployment` is the Pact one. Pass `no_message_contracts=True` to the Message Contract Service
+`record_deployment` to register the deployment of an application version that has no message contracts, for instance
+after its last producer or consumer has been removed. It requires jeap-message-contract-service 12.11.0 or later,
+which answers status 201 for an accepted declaration; anything else means the declaration had no effect and raises
+`MessageContractDeclarationIgnoredError`.
+
 ## Business process test orchestrator
 
 Drive [jeap-bptest-orchestrator](https://jeap-admin-ch.github.io/docs/building-blocks/reusable-microservices/jeap-bptest-orchestrator/)

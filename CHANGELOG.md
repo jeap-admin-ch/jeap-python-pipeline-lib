@@ -7,6 +7,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.13.0] - 2026-10-09
+
+### Added
+
+- `record_deployment` accepts `no_message_contracts`, which declares that the deployed application version has no
+  message contracts. The Message Contract Service then registers the deployment instead of ignoring it, so that the
+  contracts of the previously deployed version are no longer reported as deployed after an application has removed its
+  last producer or consumer. Requires jeap-message-contract-service 12.11.0 or later: if the service answers anything
+  other than status 201 for the declaration, it had no effect and `MessageContractDeclarationIgnoredError` is raised
+  rather than reporting a successful registration.
+
 ## [1.12.2] - 2026-10-07
 
 ### Fixed
