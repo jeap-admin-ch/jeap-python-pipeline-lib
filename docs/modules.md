@@ -48,7 +48,7 @@ Talk to the Pact Broker from build and deployment pipelines.
 |---|---|
 | `is_message_contract_compatibility_check_enabled` | Whether the compatibility check runs for an environment. |
 | `get_app_name_for_message_contract` | Resolve the app name used for message contracts. |
-| `get_compatibility`, `record_deployment`, `delete_deployments` (`message_contract_service_operations`) | Query compatibility and record / remove deployments. |
+| `get_compatibility`, `record_deployment`, `delete_deployments` (`message_contract_service_operations`) | Query compatibility and record / remove deployments. Pass `no_message_contracts=True` to `record_deployment` to register the deployment of an application version that has no message contracts. |
 
 ## Business process test orchestrator
 
