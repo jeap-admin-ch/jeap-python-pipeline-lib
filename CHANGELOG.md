@@ -7,6 +7,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.13.0] - 2026-10-16
+
+### Added
+
+- Support CloudWatch failure diagnostics for FireLens (`awsfirelens` / `cloudwatch_logs`)
+  alongside `awslogs`, including mixed tasks and direct stream links.
+- Add `has_cloudwatch_configuration` to container diagnostics to identify supported CloudWatch
+  outputs while preserving the existing `has_awslogs_configuration` flag for the `awslogs` driver.
+
 ## [1.12.3] - 2026-10-13
 
 ### Changed
