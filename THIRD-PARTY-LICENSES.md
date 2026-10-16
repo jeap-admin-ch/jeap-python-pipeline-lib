@@ -4,7 +4,7 @@
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
 | boto3              | 1.43.94     | Apache-2.0                                                   |
-| botocore           | 1.43.112    | Apache-2.0                                                   |
+| botocore           | 1.43.114    | Apache-2.0                                                   |
 | build              | 1.6.1       | MIT                                                          |
 | certifi            | 2026.7.22   | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.5.2       | MIT                                                          |
@@ -21,7 +21,7 @@
 | mdurl              | 0.1.2       | MIT License                                                  |
 | nh3                | 0.3.7       | MIT                                                          |
 | packaging          | 26.3        | Apache-2.0 OR BSD-2-Clause                                   |
-| pluggy             | 1.6.0       | MIT License                                                  |
+| pluggy             | 1.7.0       | MIT License                                                  |
 | pycparser          | 3.11        | BSD-3-Clause                                                 |
 | pyproject_hooks    | 1.3.3       | MIT                                                          |
 | pytest             | 9.1.1       | MIT                                                          |
