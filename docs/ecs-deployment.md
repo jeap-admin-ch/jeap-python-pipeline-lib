@@ -57,9 +57,19 @@ The result is a tree of dataclasses — `DeploymentFailureDiagnostics` → `Serv
 - `DeploymentFailedError` can only preserve rollout failures observed *during polling*. If ECS marks
   a rollout failed and finishes its rollback entirely between two polls, the waiter may see only the
   previous image again and eventually report a timeout instead.
-- Each container diagnostic reports via `has_awslogs_configuration` whether its task-definition entry
-  uses the `awslogs` driver. Runtime-injected containers without such an entry are still analysed for
-  exit code and failure reason, but do not count as a missing-configuration error.
+- `has_cloudwatch_configuration` identifies supported CloudWatch outputs: the `awslogs` driver or
+  `awsfirelens` with the Fluent Bit `cloudwatch_logs` output. The existing
+  `has_awslogs_configuration` flag still identifies only the `awslogs` driver.
+- For `awslogs`, the runtime stream name takes precedence; otherwise the stream is
+  `<awslogs-stream-prefix>/<container>/<task-id>`. FireLens uses `log_group_name`, `region`
+  (falling back to the requested AWS region), and `log_stream_prefix` followed verbatim by
+  `<container>-firelens-<task-id>`. The prefix owns any separator. A static `log_stream_name`
+  is also supported when no prefix is set. Dynamic Fluent Bit templates and custom routing
+  configurations are not resolved.
+- Mixed tasks are supported: application and sidecar logs can use FireLens while the log router
+  itself uses `awslogs`. Other outputs and runtime-injected containers without a supported entry
+  are still analysed for exit code and failure reason, without reporting missing CloudWatch configuration.
+- Filtering and throttling happen before CloudWatch; diagnostics can only retrieve forwarded events.
 - When region, log group and log stream are known, `cloudwatch_log_url` links straight to that stream
   in the AWS console, whether or not log events were requested. `build_cloudwatch_log_stream_url`
   builds such a URL directly.

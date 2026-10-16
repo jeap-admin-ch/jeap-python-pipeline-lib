@@ -11,7 +11,7 @@ See [ECS deployment checks](ecs-deployment.md) for details.
 |---|---|
 | `wait_until_deployments_completed` | Block until the ECS deployments of the given services run the expected image version, or raise `DeploymentFailedError` / time out. |
 | `get_deployment_status` | One-shot deployment state of a single ECS service relative to an expected image version. |
-| `get_failure_diagnostics` | Collect structured failure details (stopped tasks, container exit codes, CloudWatch log events) for a failed rollout. |
+| `get_failure_diagnostics` | Collect structured failure details (stopped tasks, container exit codes, CloudWatch log events via `awslogs` or FireLens `cloudwatch_logs`) for a failed rollout. |
 | `build_cloudwatch_log_stream_url` | Build a CloudWatch console URL pointing at a specific log stream. |
 | `wait_until_undeployment_has_finished`, `is_service_undeployed` | Wait for / check that an ECS service is fully undeployed (INACTIVE or absent). |
 | `DeploymentStatus`, `DeploymentFailedError`, `DeploymentFailureDiagnostics`, `ServiceFailureDiagnostics`, `StoppedTaskDiagnostics`, `ContainerFailureDiagnostics`, `CloudWatchLogEvent` | Result / error dataclasses. |

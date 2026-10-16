@@ -52,6 +52,7 @@ class ContainerFailureDiagnostics:
     cloudwatch_log_url: Optional[str] = None
     log_events: List[CloudWatchLogEvent] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
+    has_cloudwatch_configuration: bool = False
 
 
 @dataclass
@@ -209,12 +210,14 @@ def _get_last_stopped_task(client: boto3.client,
     return max(matching_tasks, key=_stopped_at_sort_key) if matching_tasks else None
 
 
-def _log_configuration_by_container(task_definition: Dict[str, Any]) -> Dict[str, Dict[str, str]]:
+def _log_configuration_by_container(task_definition: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     result = {}
     for container_definition in task_definition.get('containerDefinitions', []):
         log_configuration = container_definition.get('logConfiguration', {})
-        if log_configuration.get('logDriver') == 'awslogs':
-            result[container_definition.get('name', '')] = log_configuration.get('options') or {}
+        options = log_configuration.get('options') or {}
+        driver = log_configuration.get('logDriver')
+        if driver == 'awslogs' or (driver == 'awsfirelens' and options.get('Name') == 'cloudwatch_logs'):
+            result[container_definition.get('name', '')] = log_configuration
     return result
 
 
@@ -276,15 +279,26 @@ def _get_container_diagnostics(task: Dict[str, Any],
     containers = []
     for container in task.get('containers', []):
         name = container.get('name', 'unknown')
-        has_awslogs_configuration = name in log_configurations
-        log_options = log_configurations.get(name, {})
-        log_group = log_options.get('awslogs-group')
-        log_region = (log_options.get('awslogs-region', default_aws_region)
-                      if has_awslogs_configuration else None)
-        log_stream = container.get('logStreamName') if has_awslogs_configuration else None
-        stream_prefix = log_options.get('awslogs-stream-prefix')
-        if not log_stream and stream_prefix and name:
-            log_stream = f"{stream_prefix}/{name}/{_task_id(task.get('taskArn', ''))}"
+        log_configuration = log_configurations.get(name, {})
+        has_cloudwatch_configuration = name in log_configurations
+        has_awslogs_configuration = log_configuration.get('logDriver') == 'awslogs'
+        log_options = log_configuration.get('options') or {}
+        log_group = log_region = log_stream = None
+        if has_awslogs_configuration:
+            log_group = log_options.get('awslogs-group')
+            log_region = log_options.get('awslogs-region', default_aws_region)
+            log_stream = container.get('logStreamName')
+            stream_prefix = log_options.get('awslogs-stream-prefix')
+            if not log_stream and stream_prefix and name:
+                log_stream = f"{stream_prefix}/{name}/{_task_id(task.get('taskArn', ''))}"
+        elif has_cloudwatch_configuration:
+            log_group = log_options.get('log_group_name')
+            log_region = log_options.get('region', default_aws_region)
+            log_stream = log_options.get('log_stream_name')
+            stream_prefix = log_options.get('log_stream_prefix')
+            if stream_prefix is not None and name:
+                # Fluent Bit appends the ECS tag verbatim; the prefix owns any separator.
+                log_stream = f"{stream_prefix}{name}-firelens-{_task_id(task.get('taskArn', ''))}"
 
         cloudwatch_log_url = (
             build_cloudwatch_log_stream_url(log_region, log_group, log_stream)
@@ -297,11 +311,12 @@ def _get_container_diagnostics(task: Dict[str, Any],
                                                   reason=container.get('reason'),
                                                   last_status=container.get('lastStatus'),
                                                   has_awslogs_configuration=has_awslogs_configuration,
+                                                  has_cloudwatch_configuration=has_cloudwatch_configuration,
                                                   log_group=log_group,
                                                   log_stream=log_stream,
                                                   log_region=log_region,
                                                   cloudwatch_log_url=cloudwatch_log_url)
-        if include_logs and has_awslogs_configuration:
+        if include_logs and has_cloudwatch_configuration:
             if not log_group or not log_stream or not log_region:
                 diagnostics.errors.append("CloudWatch log group or stream could not be determined")
             else:
