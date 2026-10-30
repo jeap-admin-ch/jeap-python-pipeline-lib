@@ -3,10 +3,10 @@
 | PyYAML             | 6.0.3       | MIT License                                                  |
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
-| boto3              | 1.43.94     | Apache-2.0                                                   |
-| botocore           | 1.43.114    | Apache-2.0                                                   |
+| boto3              | 1.43.119    | Apache-2.0                                                   |
+| botocore           | 1.43.122    | Apache-2.0                                                   |
 | build              | 1.6.1       | MIT                                                          |
-| certifi            | 2026.7.22   | Mozilla Public License 2.0 (MPL 2.0)                         |
+| certifi            | 2026.10.23  | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.5.2       | MIT                                                          |
 | docutils           | 0.23        | BSD License; GNU General Public License (GPL); Public Domain |
 | exceptiongroup     | 1.3.1       | MIT License                                                  |
@@ -31,6 +31,6 @@
 | requests-toolbelt  | 1.0.0       | Apache Software License                                      |
 | rfc3986            | 2.0.0       | Apache Software License                                      |
 | rich               | 15.0.0      | MIT License                                                  |
-| s3transfer         | 0.19.2      | Apache Software License                                      |
+| s3transfer         | 0.19.3      | Apache Software License                                      |
 | six                | 1.17.0      | MIT License                                                  |
 | twine              | 7.0.0       | Apache-2.0                                                   |

@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.13.1] - 2026-10-30
+
+### Changed
+
+- Updated dependencies.
+
 ## [1.13.0] - 2026-10-16
 
 ### Added
