@@ -3,8 +3,8 @@
 | PyYAML             | 6.0.3       | MIT License                                                  |
 | Pygments           | 2.21.0      | BSD-2-Clause                                                 |
 | backports.tarfile  | 1.2.0       | MIT License                                                  |
-| boto3              | 1.43.119    | Apache-2.0                                                   |
-| botocore           | 1.43.123    | Apache-2.0                                                   |
+| boto3              | 1.43.123    | Apache-2.0                                                   |
+| botocore           | 1.43.125    | Apache-2.0                                                   |
 | build              | 1.6.1       | MIT                                                          |
 | certifi            | 2026.10.23  | Mozilla Public License 2.0 (MPL 2.0)                         |
 | charset-normalizer | 3.5.2       | MIT                                                          |
@@ -24,7 +24,7 @@
 | pluggy             | 1.7.0       | MIT License                                                  |
 | pycparser          | 3.11        | BSD-3-Clause                                                 |
 | pyproject_hooks    | 1.3.3       | MIT                                                          |
-| pytest             | 9.1.1       | MIT                                                          |
+| pytest             | 9.2.0       | MIT                                                          |
 | python-dateutil    | 2.9.0.post0 | Apache Software License; BSD License                         |
 | readme_renderer    | 46.0        | Apache-2.0                                                   |
 | requests           | 2.34.2      | Apache Software License                                      |
