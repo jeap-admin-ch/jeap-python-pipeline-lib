@@ -113,13 +113,25 @@ component's documentation may not name a library or the other way round.
 
 | Key             | Required   |                                                                                                       |
 |-----------------|------------|-------------------------------------------------------------------------------------------------------|
-| `path`          | yes        | The folder of the set, relative to the root of the repository. Everything below it belongs to the set |
-| `type`          | yes        | `system-docs`, `component-docs` or `library-docs`                                                     |
-| `template`      | yes        | The structure template the folders follow - `arc42`                                                   |
-| `source-format` | yes        | `markdown` or `html`                                                                                  |
-| `location`      | for `html` | The chapter the microsite is embedded in                                                              |
-| `topic`         | for `html` | The slug the microsite is served under                                                                |
-| `label`         | for `html` | The menu label of the microsite                                                                       |
+| `path`             | yes        | The folder of the set, relative to the root of the repository. Everything below it belongs to the set |
+| `type`             | yes        | `system-docs`, `component-docs` or `library-docs`                                                     |
+| `template`         | yes        | The structure template the folders follow - `arc42`                                                   |
+| `source-format`    | yes        | `markdown` or `html`                                                                                  |
+| `location`         | for `html` | The chapter the microsite is embedded in                                                              |
+| `topic`            | for `html` | The slug the microsite is served under                                                                |
+| `label`            | for `html` | The menu label of the microsite                                                                       |
+| `sidebar-position` | for `html`, optional | Where the microsite sits among its siblings, as a whole number                              |
+| `sidebar-after`    | for `html`, optional | The sidebar id of the page or generated page the microsite follows                          |
+| `sidebar-before`   | for `html`, optional | The sidebar id of the page or generated page the microsite precedes                         |
+
+`sidebar-position`, `sidebar-after` and `sidebar-before` order an HTML microsite the way the matching front
+matter keys order a Markdown page - see [The front matter allowlist](#the-front-matter-allowlist). They belong
+to `html` only: a Markdown set's pages are ordered one by one, in their own front matter, not at the level of
+the set.
+
+They need a doc service **≥ 4.5.0**. An older one answers an upload that carries them with `UNKNOWN_PARAMETER`,
+since it never offered the ordering at all; a repository that is not ready to require that version simply
+leaves the three keys out.
 
 Every value is a JSON **string**, quotes included - a number would otherwise reach the doc service stringified
 and come back as a refusal about a system nobody named. `system`, `component`, `library`, `template`,
@@ -128,9 +140,10 @@ is rejected**, not ignored - the doc service rejects an unknown upload parameter
 ignored a misspelled `source-fomat` would be the one place in the chain where a typo is forgiven. A key
 written in the wrong half is not reported as unknown but as misplaced, naming where it belongs.
 
-**A validation sends only what the structure depends on.** `version`, `site`, `label` and the provenance of an
-upload are refused by the validation endpoint: a path tree does not depend on a commit hash, and an endpoint
-that demanded one to answer a structural question would be answering a different one.
+**A validation sends only what the structure depends on.** `version`, `site`, `label`, `sidebar-position`,
+`sidebar-after`, `sidebar-before` and the provenance of an upload are refused by the validation endpoint: a
+path tree does not depend on a commit hash or on where a page sits in the navigation, and an endpoint that
+demanded one to answer a structural question would be answering a different one.
 
 ## The content checks
 
@@ -143,18 +156,32 @@ not content-checked at all - a microsite is published as it is, in an iframe.
 | `MALFORMED_MARKDOWN`         | The file cannot be parsed as CommonMark at all                                                 |
 | `MALFORMED_FRONT_MATTER`     | The `---` block is never closed, is not valid YAML, carries one key twice, or is not a mapping |
 | `FORBIDDEN_FRONT_MATTER_KEY` | A front matter key outside the allowlist                                                       |
+| `INVALID_FRONT_MATTER_VALUE` | An allowed front matter key whose value is not the shape it takes - a number or a string       |
 | `DEAD_LINK`                  | A relative link or image target that resolves to no file in the set                            |
 | `LINK_WITHOUT_EXTENSION`     | A relative link to a page written without its `.md`                                            |
 | `LINK_OUT_OF_SET`            | A relative target that climbs out of the documentation folder                                  |
 
 ### The front matter allowlist
 
-`title`, `description`, `sidebar_label`, `tags`, `keywords` - everything a page legitimately says about itself.
-Everything else is a finding, and `slug` is the one worth spelling out: front matter can change a document's
-URL, so an uploaded page could otherwise take over a route the doc service generates. The site is built with
-`onDuplicateRoutes: 'throw'`, so that fails the build of the whole part rather than the page. A page's
-identity, its URL and its place in the navigation come from the folder it sits in and from what the doc service
-writes beside it.
+`title`, `description`, `sidebar_label`, `tags`, `keywords`, `sidebar_position`, `sidebar_after`,
+`sidebar_before` - everything a page legitimately says about itself, including where it sits among its
+siblings. Everything else is a finding, and `slug` is the one worth spelling out: front matter can change a
+document's URL, so an uploaded page could otherwise take over a route the doc service generates. The site is
+built with `onDuplicateRoutes: 'throw'`, so that fails the build of the whole part rather than the page. A
+page's identity and its URL come from the folder it sits in and from what the doc service writes beside it.
+
+`sidebar_position` orders a page among the siblings of its own chapter, as a whole number; `sidebar_after` and
+`sidebar_before` order it relative to another page or a generated page, named by its sidebar id. A page naming
+neither sorts to the end of its chapter, after every page that does. All three are **optional**, and this
+module checks only their **shape** - a number for `sidebar_position`, a string for `sidebar_after` and
+`sidebar_before`, reported as `INVALID_FRONT_MATTER_VALUE` otherwise. Whether the name a `sidebar_after` or
+`sidebar_before` refers to actually exists is for the doc service to say, once it can see the whole chapter the
+page is uploaded into - that is the one rule this module does not duplicate.
+
+An older doc service, one that does not know these three keys yet, simply drops them from the front matter it
+reads - which is harmless, unlike an HTML microsite's `sidebar-position`, `sidebar-after` and `sidebar-before`,
+which such a service refuses outright as unknown parameters; see
+[The documentation configuration](#the-documentation-configuration).
 
 ### Links
 

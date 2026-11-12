@@ -167,7 +167,8 @@ class ValueTypeTest(unittest.TestCase):
 
     def test_every_key_that_takes_a_string_is_checked(self):
         for key in ("path", "type", "system", "template", "source_format", "component", "library",
-                    "location", "topic", "label", "version", "site"):
+                    "location", "topic", "label", "version", "site",
+                    "sidebar_position", "sidebar_after", "sidebar_before"):
             values = dict(path="./docs", type="component-docs", system="orders", template="arc42",
                           source_format="markdown", component="a-component")
             values[key] = 1
@@ -277,6 +278,34 @@ class DocumentationSetTest(unittest.TestCase):
                 documentation_sets_from_config(_component(entry))
             self.assertIn(f"'{key}' belongs to source-format 'html' only", str(raised.exception))
 
+    def test_sidebar_ordering_is_optional_for_html(self):
+        sets = documentation_sets_from_config(_component(HTML_SET))
+
+        self.assertIsNone(sets[0].sidebar_position)
+        self.assertIsNone(sets[0].sidebar_after)
+        self.assertIsNone(sets[0].sidebar_before)
+
+    def test_sidebar_ordering_is_accepted_for_html(self):
+        entry = dict(HTML_SET, **{"sidebar-position": "1", "sidebar-after": "kontext",
+                                  "sidebar-before": "sap-interfaces"})
+
+        sets = documentation_sets_from_config(_component(entry))
+
+        self.assertEqual("1", sets[0].sidebar_position)
+        self.assertEqual("kontext", sets[0].sidebar_after)
+        self.assertEqual("sap-interfaces", sets[0].sidebar_before)
+
+    def test_sidebar_ordering_is_refused_for_markdown(self):
+        for key, value in (("sidebar-position", "1"), ("sidebar-after", "a-page"),
+                           ("sidebar-before", "a-page")):
+            entry = dict(MARKDOWN_SET)
+            entry[key] = value
+            with self.assertRaises(DocumentationConfigError) as raised:
+                documentation_sets_from_config(_component(entry))
+            self.assertIn(f"'{key}' belongs to source-format 'html' only",
+                         str(raised.exception))
+            self.assertIn("front matter", str(raised.exception))
+
     def test_a_value_that_is_not_a_slug_is_rejected(self):
         with self.assertRaises(DocumentationConfigError) as raised:
             documentation_sets_from_config(_component(MARKDOWN_SET, system="JME"))
@@ -335,11 +364,14 @@ class ValidationQueryParametersTest(unittest.TestCase):
                           "topic": "configuration-reference"}, parameters)
 
     def test_what_the_endpoint_refuses_is_never_sent(self):
+        html_with_sidebar_ordering = dict(HTML_SET, **{
+            "sidebar-position": "1", "sidebar-after": "kontext", "sidebar-before": "sap-interfaces"})
         parameters = documentation_sets_from_config(
-            _component(MARKDOWN_SET, version="1.4.0",
+            _component(html_with_sidebar_ordering, version="1.4.0",
                        site="governance"))[0].validation_query_parameters()
 
-        for refused in ("version", "site", "label", "source-repository", "source-revision",
+        for refused in ("version", "site", "label", "sidebar-position", "sidebar-after",
+                        "sidebar-before", "source-repository", "source-revision",
                         "source-ref", "source-timestamp", "build-url", "generated-at", "path"):
             self.assertNotIn(refused, parameters)
 
@@ -409,6 +441,23 @@ class UploadQueryParametersTest(unittest.TestCase):
         self.assertEqual("8-crosscutting-concepts", parameters["location"])
         self.assertEqual("configuration-reference", parameters["topic"])
         self.assertEqual("Configuration Reference", parameters["label"])
+
+    def test_an_html_set_with_no_sidebar_ordering_sends_none(self):
+        parameters = documentation_sets_from_config(
+            _component(HTML_SET))[0].upload_query_parameters(PROVENANCE, "1.0.0")
+
+        for key in ("sidebar-position", "sidebar-after", "sidebar-before"):
+            self.assertNotIn(key, parameters)
+
+    def test_an_html_set_sends_the_sidebar_ordering_it_names(self):
+        entry = dict(HTML_SET, **{"sidebar-position": "1", "sidebar-after": "kontext",
+                                  "sidebar-before": "sap-interfaces"})
+        parameters = documentation_sets_from_config(
+            _component(entry))[0].upload_query_parameters(PROVENANCE, "1.0.0")
+
+        self.assertEqual("1", parameters["sidebar-position"])
+        self.assertEqual("kontext", parameters["sidebar-after"])
+        self.assertEqual("sap-interfaces", parameters["sidebar-before"])
 
     def test_the_site_is_sent_when_the_repository_names_one(self):
         parameters = documentation_sets_from_config(

@@ -55,6 +55,13 @@ class ValidPagesTest(ContentValidationTestCase):
 
         self.assertTrue(self.validate("1-intro/goals.md").accepted)
 
+    def test_sidebar_ordering_keys_with_the_right_shape_are_accepted(self):
+        self.write("1-intro/goals.md",
+                   "---\ntitle: Goals\nsidebar_position: 2\nsidebar_after: intro\n"
+                   "sidebar_before: constraints\n---\n")
+
+        self.assertTrue(self.validate("1-intro/goals.md").accepted)
+
     def test_a_page_without_front_matter_is_accepted(self):
         self.write("1-intro/goals.md", "# Goals\n\nText.\n")
 
@@ -90,15 +97,41 @@ class FrontMatterTest(ContentValidationTestCase):
         finding = report.findings[0]
         self.assertIn("'slug' is not allowed", finding.message)
         self.assertIn("URL", finding.message)
-        self.assertIn("Allowed: description, keywords, sidebar_label, tags, title.",
-                      finding.message)
+        self.assertIn("Allowed: description, keywords, sidebar_after, sidebar_before, "
+                      "sidebar_label, sidebar_position, tags, title.", finding.message)
         self.assertEqual(3, finding.line, "the line the key is written on, fence included")
 
-    def test_sidebar_position_is_refused(self):
-        self.write("1-intro/goals.md", "---\ntitle: Goals\nsidebar_position: 2\n---\n")
+    def test_sidebar_position_must_be_a_number(self):
+        self.write("1-intro/goals.md", "---\ntitle: Goals\nsidebar_position: first\n---\n")
 
-        self.assertEqual([str(ContentFindingCode.FORBIDDEN_FRONT_MATTER_KEY)],
+        report = self.validate("1-intro/goals.md")
+
+        self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)], self.codes(report))
+        self.assertIn("'sidebar_position' is 'first', which is not a number",
+                      report.findings[0].message)
+        self.assertEqual(3, report.findings[0].line)
+
+    def test_sidebar_position_is_not_a_bool(self):
+        self.write("1-intro/goals.md", "---\ntitle: Goals\nsidebar_position: true\n---\n")
+
+        self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)],
                          self.codes(self.validate("1-intro/goals.md")))
+
+    def test_sidebar_after_and_before_must_be_strings(self):
+        for key in ("sidebar_after", "sidebar_before"):
+            self.write("1-intro/goals.md", f"---\ntitle: Goals\n{key}: 2\n---\n")
+
+            report = self.validate("1-intro/goals.md")
+
+            self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)],
+                             self.codes(report), key)
+            self.assertIn(f"'{key}' is 2, which is not a string", report.findings[0].message)
+
+    def test_the_doc_service_checks_whether_the_reference_resolves_not_the_pipeline(self):
+        self.write("1-intro/goals.md",
+                   "---\ntitle: Goals\nsidebar_after: a-page-that-does-not-exist\n---\n")
+
+        self.assertTrue(self.validate("1-intro/goals.md").accepted)
 
     def test_every_refused_key_is_its_own_finding(self):
         self.write("1-intro/goals.md", "---\nslug: /a\nid: goals\ndraft: true\n---\n")

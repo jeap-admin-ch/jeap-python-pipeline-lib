@@ -10,9 +10,13 @@ later, far away from the person who wrote the page:
 
 1. the file is text - valid UTF-8 without a NUL byte;
 2. it parses as CommonMark, which is how the published site reads it;
-3. its front matter is a YAML mapping whose keys are on an allowlist, so a page cannot reach into
-   how the site is assembled - `slug` above all, which would change the page's URL;
+3. its front matter is a YAML mapping whose keys are on an allowlist, and whose sidebar-ordering
+   values have the right shape, so a page cannot reach into how the site is assembled - `slug`
+   above all, which would change the page's URL - nor hand the doc service a value it would refuse;
 4. every relative link and image resolves to a file in the same documentation set.
+
+Whether a page's `sidebar_after` or `sidebar_before` actually names a page is not checked here: the
+doc service resolves that name against the chapter it uploads into, which this module never sees.
 
 What is deliberately not checked: `http(s)` and `mailto` links (a link checker that reaches the
 internet makes a build flaky), anchors (a heading may come from a generated page in the same
@@ -23,18 +27,29 @@ have), and missing front matter (the site derives a title from the first heading
 import posixpath
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import FrozenSet, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 from urllib.parse import unquote, urlparse
 
 import yaml
 from markdown_it import MarkdownIt
 
-#: The front matter keys a page may carry. Everything a page legitimately says about itself, and
-#: nothing that changes its identity, its URL or its place in the navigation - those come from the
-#: folder the page sits in and from what the doc service generates beside it.
+#: The front matter keys a page may carry. Everything a page legitimately says about itself -
+#: including where it sits among its siblings - and nothing that changes its identity or its URL,
+#: which come from the folder the page sits in and from what the doc service generates beside it.
 ALLOWED_FRONT_MATTER_KEYS: FrozenSet[str] = frozenset({
     "title", "description", "sidebar_label", "tags", "keywords",
+    "sidebar_position", "sidebar_after", "sidebar_before",
 })
+
+#: The shape an allowed front matter key's value has to have, for the keys that carry one: a
+#: whole number for `sidebar_position`, a string naming another page's sidebar id for
+#: `sidebar_after` and `sidebar_before`. Whether that name exists is the doc service's to check,
+#: once it can see the chapter the page is uploaded into.
+_SIDEBAR_FRONT_MATTER_VALUE_TYPES: Dict[str, type] = {
+    "sidebar_position": int,
+    "sidebar_after": str,
+    "sidebar_before": str,
+}
 
 #: The most findings one report carries, matching the doc service's own default.
 DEFAULT_MAX_FINDINGS = 50
@@ -70,6 +85,7 @@ class ContentFindingCode(str, Enum):
     MALFORMED_MARKDOWN = "MALFORMED_MARKDOWN"
     MALFORMED_FRONT_MATTER = "MALFORMED_FRONT_MATTER"
     FORBIDDEN_FRONT_MATTER_KEY = "FORBIDDEN_FRONT_MATTER_KEY"
+    INVALID_FRONT_MATTER_VALUE = "INVALID_FRONT_MATTER_VALUE"
     DEAD_LINK = "DEAD_LINK"
     LINK_WITHOUT_EXTENSION = "LINK_WITHOUT_EXTENSION"
     LINK_OUT_OF_SET = "LINK_OUT_OF_SET"
@@ -227,13 +243,42 @@ def _check_front_matter(path: str,
     allowed = ", ".join(sorted(allowed_front_matter_keys))
     findings = []
     for key in sorted(str(key) for key in parsed.keys()):
-        if key in allowed_front_matter_keys:
-            continue
-        findings.append(ContentFinding(
-            ContentFindingCode.FORBIDDEN_FRONT_MATTER_KEY, path,
-            _forbidden_key_message(key, allowed),
-            _front_matter_key_line(front_matter_lines, key)))
+        if key not in allowed_front_matter_keys:
+            findings.append(ContentFinding(
+                ContentFindingCode.FORBIDDEN_FRONT_MATTER_KEY, path,
+                _forbidden_key_message(key, allowed),
+                _front_matter_key_line(front_matter_lines, key)))
+        elif _wrong_front_matter_shape(key, parsed[key]):
+            findings.append(ContentFinding(
+                ContentFindingCode.INVALID_FRONT_MATTER_VALUE, path,
+                _invalid_front_matter_value_message(key, parsed[key]),
+                _front_matter_key_line(front_matter_lines, key)))
     return findings
+
+
+def _wrong_front_matter_shape(key: str, value: Any) -> bool:
+    """Whether a front matter value does not have the shape its key requires, if it has one."""
+    expected = _SIDEBAR_FRONT_MATTER_VALUE_TYPES.get(key)
+    if expected is None:
+        return False
+    if expected is int:
+        return not isinstance(value, int) or isinstance(value, bool)  # a bool is not a number
+    return not isinstance(value, expected)
+
+
+def _invalid_front_matter_value_message(key: str, value: Any) -> str:
+    """Say what shape a sidebar-ordering front matter key needs, and whose job the rest is."""
+    descriptions = {
+        "sidebar_position": "a number. It says where the page sits among its siblings; write it "
+                            "as a whole number, for instance '1'",
+        "sidebar_after": "a string. It names, by its sidebar id, the page or generated page this "
+                         "one follows",
+        "sidebar_before": "a string. It names, by its sidebar id, the page or generated page this "
+                          "one precedes",
+    }
+    return (f"'{key}' is {value!r}, which is not {descriptions[key]}. Whether that name exists is "
+            f"checked by the doc service, which resolves it against the chapter the page is "
+            f"uploaded into.")
 
 
 def _forbidden_key_message(key: str, allowed: str) -> str:
@@ -242,8 +287,6 @@ def _forbidden_key_message(key: str, allowed: str) -> str:
         "slug": "It would change the page's URL and could collide with a route the doc service "
                 "generates.",
         "id": "It would change the page's identity, which the doc service derives from its path.",
-        "sidebar_position": "The order of the pages of a chapter comes from the folder, not from "
-                            "the page.",
         "sidebar_class_name": "How the navigation looks is the site's, not a page's.",
         "custom_edit_url": "The link to the source is written by the doc service, which knows "
                            "where the page came from.",
