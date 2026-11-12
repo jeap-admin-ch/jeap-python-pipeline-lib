@@ -57,8 +57,7 @@ class ValidPagesTest(ContentValidationTestCase):
 
     def test_sidebar_ordering_keys_with_the_right_shape_are_accepted(self):
         self.write("1-intro/goals.md",
-                   "---\ntitle: Goals\nsidebar_position: 2\nsidebar_after: intro\n"
-                   "sidebar_before: constraints\n---\n")
+                   "---\ntitle: Goals\nsidebar_position: 2.5\nsidebar_after: intro\n---\n")
 
         self.assertTrue(self.validate("1-intro/goals.md").accepted)
 
@@ -107,25 +106,46 @@ class FrontMatterTest(ContentValidationTestCase):
         report = self.validate("1-intro/goals.md")
 
         self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)], self.codes(report))
-        self.assertIn("'sidebar_position' is 'first', which is not a number",
+        self.assertIn("'sidebar_position' is 'first', which is not a finite number",
                       report.findings[0].message)
         self.assertEqual(3, report.findings[0].line)
 
-    def test_sidebar_position_is_not_a_bool(self):
-        self.write("1-intro/goals.md", "---\ntitle: Goals\nsidebar_position: true\n---\n")
+    def test_sidebar_position_may_be_an_integer_or_a_decimal(self):
+        for value in ("2", "-3", "0", "2.5", "1.0e+3"):
+            self.write("1-intro/goals.md", f"---\nsidebar_position: {value}\n---\n")
 
-        self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)],
-                         self.codes(self.validate("1-intro/goals.md")))
+            self.assertTrue(self.validate("1-intro/goals.md").accepted, value)
 
-    def test_sidebar_after_and_before_must_be_strings(self):
-        for key in ("sidebar_after", "sidebar_before"):
-            self.write("1-intro/goals.md", f"---\ntitle: Goals\n{key}: 2\n---\n")
-
-            report = self.validate("1-intro/goals.md")
+    def test_sidebar_position_that_orders_nothing_is_refused(self):
+        # A YAML boolean is an int to Python, NaN and infinity are floats, and an integer beyond
+        # the range of a double is one the doc service reads as infinity.
+        for value in ("true", ".nan", ".inf", "-.inf", "1" + "0" * 400, "'2'", "[1]", ""):
+            self.write("1-intro/goals.md", f"---\nsidebar_position: {value}\n---\n")
 
             self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)],
-                             self.codes(report), key)
-            self.assertIn(f"'{key}' is 2, which is not a string", report.findings[0].message)
+                             self.codes(self.validate("1-intro/goals.md")), value)
+
+    def test_sidebar_after_and_before_must_be_a_name(self):
+        for key in ("sidebar_after", "sidebar_before"):
+            for value in ("2", "''", "'   '", "[a, b]", ""):
+                self.write("1-intro/goals.md", f"---\ntitle: Goals\n{key}: {value}\n---\n")
+
+                report = self.validate("1-intro/goals.md")
+
+                self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)],
+                                 self.codes(report), f"{key}: {value}")
+                self.assertIn(f"'{key}' is", report.findings[0].message)
+                self.assertIn("not the name of a page", report.findings[0].message)
+
+    def test_sidebar_after_and_before_together_are_refused(self):
+        self.write("1-intro/goals.md",
+                   "---\ntitle: Goals\nsidebar_after: intro\nsidebar_before: constraints\n---\n")
+
+        report = self.validate("1-intro/goals.md")
+
+        self.assertEqual([str(ContentFindingCode.INVALID_FRONT_MATTER_VALUE)], self.codes(report))
+        self.assertIn("both set", report.findings[0].message)
+        self.assertEqual(4, report.findings[0].line, "the line of the second of the two")
 
     def test_the_doc_service_checks_whether_the_reference_resolves_not_the_pipeline(self):
         self.write("1-intro/goals.md",
