@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Note: Please keep [publiccode.yml](publiccode.yml) in sync with this file.
 
+## [1.14.0] - 2026-11-12
+
+### Added
+
+- Allow `sidebar_position`, `sidebar_after` and `sidebar_before` in page front matter, checking their shape
+  only; the new finding `INVALID_FRONT_MATTER_VALUE` reports a wrong one. Needs doc service ≥ 4.5.0.
+- Accept and upload `sidebar-position`, `sidebar-after` and `sidebar-before` on HTML documentation sets.
+
 ## [1.13.2] - 2026-11-06
 
 ### Changed
