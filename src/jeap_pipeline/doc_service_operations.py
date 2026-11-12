@@ -282,12 +282,9 @@ class DocumentationSet:
             parameters["site"] = self.site
         if self.source_format == "html":
             parameters["label"] = self.label
-            if self.sidebar_position:
-                parameters["sidebar-position"] = self.sidebar_position
-            if self.sidebar_after:
-                parameters["sidebar-after"] = self.sidebar_after
-            if self.sidebar_before:
-                parameters["sidebar-before"] = self.sidebar_before
+            for name in _OPTIONAL_HTML_PLACEMENT:
+                if getattr(self, name) is not None:
+                    parameters[name.replace("_", "-")] = getattr(self, name)
 
         version = version or self.version
         if self.type in ("component-docs", "library-docs"):
@@ -823,9 +820,15 @@ def _check_subject(documentation_set: DocumentationSet) -> None:
 #: Where an HTML microsite is embedded, required because it has no folder names of its own.
 _REQUIRED_HTML_PLACEMENT = ("location", "topic", "label")
 
-#: Where an HTML microsite sits in its chapter's sidebar order. Optional, unlike the keys above: a
-#: microsite with none of them is simply sorted to the end, the same as a page with none.
+#: Where an HTML microsite sits among the items of its chapter. Optional, unlike the keys above: a
+#: microsite naming none of them is sorted by its label among the items without a reference, as a
+#: page without them is by its title.
 _OPTIONAL_HTML_PLACEMENT = ("sidebar_position", "sidebar_after", "sidebar_before")
+
+# An integer or a decimal, as an upload parameter carries it. Narrower than what a float parser
+# reads - no exponent, no `nan`, no `inf`, no digit separators - so nothing passes here that the
+# doc service would refuse as not a finite number.
+_POSITION_PATTERN = re.compile(r"^-?[0-9]+(\.[0-9]+)?$")
 
 
 def _check_html_placement(documentation_set: DocumentationSet) -> None:
@@ -837,6 +840,7 @@ def _check_html_placement(documentation_set: DocumentationSet) -> None:
                     f"'{name}' is required for source-format 'html' and is missing: an HTML "
                     f"microsite cannot be sorted into a chapter by its folder names, so the upload "
                     f"says where it goes.")
+        _check_html_sidebar_order(documentation_set)
     else:
         for name in _REQUIRED_HTML_PLACEMENT:
             if getattr(documentation_set, name):
@@ -849,6 +853,32 @@ def _check_html_placement(documentation_set: DocumentationSet) -> None:
                     f"'{name.replace('_', '-')}' belongs to source-format 'html' only. Where a "
                     f"Markdown page sits among its siblings is said in the page's own front "
                     f"matter, not in the upload configuration.")
+
+
+def _check_html_sidebar_order(documentation_set: DocumentationSet) -> None:
+    """
+    The shape of a microsite's sidebar order: a finite number, one non-blank name, one direction.
+
+    Whether the name exists is not checked: the doc service resolves it against what is stored for
+    the chapter, which a pipeline cannot see.
+    """
+    position = documentation_set.sidebar_position
+    if position is not None and not _POSITION_PATTERN.match(position):
+        raise DocumentationConfigError(
+            f"'sidebar-position' is '{position}', which is not a number. Write an integer or a "
+            f"decimal as a string, for instance \"2\" or \"2.5\".")
+
+    for name in ("sidebar_after", "sidebar_before"):
+        value = getattr(documentation_set, name)
+        if value is not None and not value.strip():
+            raise DocumentationConfigError(
+                f"'{name.replace('_', '-')}' is blank. Write the name of one other item of the "
+                f"chapter, or leave the key out.")
+
+    if documentation_set.sidebar_after is not None and documentation_set.sidebar_before is not None:
+        raise DocumentationConfigError(
+            "'sidebar-after' and 'sidebar-before' are both set. A microsite is placed relative to "
+            "one other item of its chapter, so name one of the two.")
 
 
 def _check_path(path: str) -> None:

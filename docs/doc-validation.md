@@ -120,14 +120,15 @@ component's documentation may not name a library or the other way round.
 | `location`         | for `html` | The chapter the microsite is embedded in                                                              |
 | `topic`            | for `html` | The slug the microsite is served under                                                                |
 | `label`            | for `html` | The menu label of the microsite                                                                       |
-| `sidebar-position` | for `html`, optional | Where the microsite sits among its siblings, as a whole number                              |
-| `sidebar-after`    | for `html`, optional | The sidebar id of the page or generated page the microsite follows                          |
-| `sidebar-before`   | for `html`, optional | The sidebar id of the page or generated page the microsite precedes                         |
+| `sidebar-position` | for `html`, optional | Where the microsite sits among the items of its chapter: an integer or a decimal, as a string |
+| `sidebar-after`    | for `html`, optional | The name of the item of the chapter the microsite follows                                   |
+| `sidebar-before`   | for `html`, optional | The name of the item of the chapter the microsite precedes                                  |
 
 `sidebar-position`, `sidebar-after` and `sidebar-before` order an HTML microsite the way the matching front
-matter keys order a Markdown page - see [The front matter allowlist](#the-front-matter-allowlist). They belong
-to `html` only: a Markdown set's pages are ordered one by one, in their own front matter, not at the level of
-the set.
+matter keys order a Markdown page - see [Ordering the pages of a chapter](#ordering-the-pages-of-a-chapter).
+They belong to `html` only: a Markdown set's pages are ordered one by one, in their own front matter, not at the
+level of the set. The position is written as a string like every other value (`"2"`, `"2.5"`); at most one of
+`sidebar-after` and `sidebar-before` is set, and neither may be blank.
 
 They need a doc service **≥ 4.5.0**. An older one answers an upload that carries them with `UNKNOWN_PARAMETER`,
 since it never offered the ordering at all; a repository that is not ready to require that version simply
@@ -156,7 +157,7 @@ not content-checked at all - a microsite is published as it is, in an iframe.
 | `MALFORMED_MARKDOWN`         | The file cannot be parsed as CommonMark at all                                                 |
 | `MALFORMED_FRONT_MATTER`     | The `---` block is never closed, is not valid YAML, carries one key twice, or is not a mapping |
 | `FORBIDDEN_FRONT_MATTER_KEY` | A front matter key outside the allowlist                                                       |
-| `INVALID_FRONT_MATTER_VALUE` | An allowed front matter key whose value is not the shape it takes - a number or a string       |
+| `INVALID_FRONT_MATTER_VALUE` | A sidebar-ordering key of the wrong shape, or `sidebar_after` and `sidebar_before` together    |
 | `DEAD_LINK`                  | A relative link or image target that resolves to no file in the set                            |
 | `LINK_WITHOUT_EXTENSION`     | A relative link to a page written without its `.md`                                            |
 | `LINK_OUT_OF_SET`            | A relative target that climbs out of the documentation folder                                  |
@@ -164,23 +165,44 @@ not content-checked at all - a microsite is published as it is, in an iframe.
 ### The front matter allowlist
 
 `title`, `description`, `sidebar_label`, `tags`, `keywords`, `sidebar_position`, `sidebar_after`,
-`sidebar_before` - everything a page legitimately says about itself, including where it sits among its
-siblings. Everything else is a finding, and `slug` is the one worth spelling out: front matter can change a
-document's URL, so an uploaded page could otherwise take over a route the doc service generates. The site is
-built with `onDuplicateRoutes: 'throw'`, so that fails the build of the whole part rather than the page. A
-page's identity and its URL come from the folder it sits in and from what the doc service writes beside it.
+`sidebar_before` - everything a page legitimately says about itself, including where it sits among the items
+of its own chapter. Everything else is a finding, and `slug` is the one worth spelling out: front matter can
+change a document's URL, so an uploaded page could otherwise take over a route the doc service generates. The
+site is built with `onDuplicateRoutes: 'throw'`, so that fails the build of the whole part rather than the
+page. A page's identity and its URL come from the folder it sits in and from what the doc service writes beside
+it.
 
-`sidebar_position` orders a page among the siblings of its own chapter, as a whole number; `sidebar_after` and
-`sidebar_before` order it relative to another page or a generated page, named by its sidebar id. A page naming
-neither sorts to the end of its chapter, after every page that does. All three are **optional**, and this
-module checks only their **shape** - a number for `sidebar_position`, a string for `sidebar_after` and
-`sidebar_before`, reported as `INVALID_FRONT_MATTER_VALUE` otherwise. Whether the name a `sidebar_after` or
-`sidebar_before` refers to actually exists is for the doc service to say, once it can see the whole chapter the
-page is uploaded into - that is the one rule this module does not duplicate.
+### Ordering the pages of a chapter
 
-An older doc service, one that does not know these three keys yet, simply drops them from the front matter it
-reads - which is harmless, unlike an HTML microsite's `sidebar-position`, `sidebar-after` and `sidebar-before`,
-which such a service refuses outright as unknown parameters; see
+All three keys are optional; a page carrying none of them is ordered as before - after the generated pages, by
+title.
+
+| Key                | Value                                                                                 |
+|--------------------|---------------------------------------------------------------------------------------|
+| `sidebar_position` | A finite number, integer or decimal (`2`, `2.5`). Orders the items that share a place |
+| `sidebar_after`    | The name of one other item of the same chapter, which this page follows               |
+| `sidebar_before`   | The name of one other item of the same chapter, which this page precedes              |
+
+A **name** is the URL segment of the item below its chapter:
+
+- an uploaded page: its file name without `.md` and without a number prefix (`02-kontext.md` is `kontext`);
+- a generated page: its name in the structure template, for instance `system-context-view` or `whitebox-view`;
+- a microsite: `microsites/<topic>`.
+
+The generated pages come first, in the template's order. A page naming another item stands right before or
+after it, and chains of such references work. Pages naming nothing follow, ordered by `sidebar_position` -
+pages without one last - then by title. A page whose reference does not exist in an environment goes to the end
+of its chapter there rather than failing the build.
+
+**This module checks the shape only**, as `INVALID_FRONT_MATTER_VALUE`: a number that is finite (not `true`,
+`.nan` or `.inf`), a name that is a non-blank string, and at most one of `sidebar_after` and `sidebar_before`.
+Whether a name refers to an existing item, and whether references form a cycle, is decided by the doc service at
+upload - it alone can see what is already stored for the chapter, so that rule has one definition, in
+[the jEAP doc service](https://jeap-admin-ch.github.io/docs/building-blocks/reusable-microservices/jeap-doc-service/).
+
+**These keys need a doc service ≥ 4.5.0.** An older one drops them from the front matter it reads, so a page
+using them is published in the old order - harmless. An HTML microsite's `sidebar-position`, `sidebar-after` and
+`sidebar-before` are different: an older service refuses them as unknown upload parameters, see
 [The documentation configuration](#the-documentation-configuration).
 
 ### Links
