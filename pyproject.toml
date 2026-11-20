@@ -24,9 +24,9 @@ license = "Apache-2.0"
 license-files = ["LICEN[CS]E*"]
 
 dependencies = [
-    "boto3==1.43.127",
+    "boto3==1.44.4",
     "requests==2.34.2",
-    "markdown-it-py==4.2.0",
+    "markdown-it-py==4.3.0",
     "PyYAML==6.0.3"
 ]
 
