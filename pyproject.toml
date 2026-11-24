@@ -27,7 +27,7 @@ dependencies = [
     "boto3==1.44.4",
     "requests==2.34.2",
     "markdown-it-py==4.3.0",
-    "PyYAML==6.0.3"
+    "PyYAML==6.0.4"
 ]
 
 [project.optional-dependencies]
